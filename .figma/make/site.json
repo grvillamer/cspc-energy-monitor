@@ -1,0 +1,10 @@
+{
+  "description": "This app streamlines thesis project management, enabling users to organize research, collaborate with peers, and track progress efficiently.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
