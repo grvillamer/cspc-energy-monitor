@@ -761,7 +761,7 @@ export default function App() {
 
         <footer style={{ marginTop: 48, paddingTop: 24, borderTop: `1px solid ${BORDER}`, textAlign: "center" }}>
           <p style={{ color: "#2a2a2a", fontFamily: MONO, fontSize: 11 }}>
-            CSPC · College of Computer Studies · BS Computer Science · Jan 2026 · Romance · Namia · Sarcauga · Villamer
+            CSPC · College of Computer Studies · BS Computer Science · September 2026
           </p>
         </footer>
       </main>
