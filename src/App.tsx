@@ -721,7 +721,7 @@ export default function App() {
           </div>
           <div>
             <p style={{ color: "#fff", fontWeight: 700, fontSize: 14, fontFamily: SANS }}>CSPC Green Building Energy Monitor</p>
-            <p style={{ color: "#444", fontSize: 11, fontFamily: MONO }}>Shelly Pro 3EM · 400A · Camarines Sur Polytechnic Colleges</p>
+            <p style={{ color: "#444", fontSize: 11, fontFamily: MONO }}>Shelly Pro 3EM · 400A · Green Building · Camarines Sur Polytechnic Colleges</p>
           </div>
         </div>
         <div className="header-status" style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -760,8 +760,9 @@ export default function App() {
         {tab === "Model Comparison" && <ModelComparisonTab />}
 
         <footer style={{ marginTop: 48, paddingTop: 24, borderTop: `1px solid ${BORDER}`, textAlign: "center" }}>
-          <p style={{ color: "#2a2a2a", fontFamily: MONO, fontSize: 11 }}>
-            CSPC · College of Computer Studies · BS Computer Science · September 2026
+          <p style={{ color: "#2a2a2a", fontFamily: MONO, fontSize: 11, lineHeight: 1.7 }}>
+            CSPC · College of Computer Studies · BS Computer Science · September 2026<br />
+            Romance · Sarcauga · Namia · Villamer · Adviser: Tiffanylyn Pandes, MSc.
           </p>
         </footer>
       </main>
