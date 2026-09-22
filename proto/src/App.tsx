@@ -720,7 +720,7 @@ export default function App() {
             ⚡
           </div>
           <div>
-            <p style={{ color: "#fff", fontWeight: 700, fontSize: 14, fontFamily: SANS }}>CSPC Energy Monitor App</p>
+            <p style={{ color: "#fff", fontWeight: 700, fontSize: 14, fontFamily: SANS }}>CSPC Energy Monitor</p>
             <p style={{ color: "#444", fontSize: 11, fontFamily: MONO }}>Shelly Pro 3EM · 400A · Camarines Sur Polytechnic Colleges</p>
           </div>
         </div>
