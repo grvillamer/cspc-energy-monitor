@@ -262,7 +262,7 @@ function LiveMonitorTab() {
         <SectionTitle>Device — Shelly Pro 3EM</SectionTitle>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0 }}>
           <StatRow label="Model" value="Shelly Pro 3EM" color="#888" />
-          <StatRow label="Max Current" value="400" unit="A" color={G} />
+          <StatRow label="Max Current" value="120" unit="A" color={G} />
           <StatRow label="Phases" value="3" color="#888" />
           <StatRow label="Status" value="Online" color={G} />
           <StatRow label="Location" value="CSPC Main" color="#888" />
@@ -721,7 +721,7 @@ export default function App() {
           </div>
           <div>
             <p style={{ color: "#fff", fontWeight: 700, fontSize: 14, fontFamily: SANS }}>CSPC Energy Monitor</p>
-            <p style={{ color: "#444", fontSize: 11, fontFamily: MONO }}>Shelly Pro 3EM · 400A · Camarines Sur Polytechnic Colleges</p>
+            <p style={{ color: "#444", fontSize: 11, fontFamily: MONO }}>Shelly Pro 3EM · 120A · Camarines Sur Polytechnic Colleges</p>
           </div>
         </div>
         <div className="header-status" style={{ display: "flex", alignItems: "center", gap: 8 }}>
