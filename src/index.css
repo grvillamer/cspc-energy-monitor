@@ -4,13 +4,48 @@
 
 html, body, #root {
   height: 100%;
-  background: #0a0a0a;
+  background: var(--app-bg);
+}
+
+:root,
+.energy-app[data-theme="dark"] {
+  color-scheme: dark;
+  --app-bg: #0a0a0a;
+  --surface-header: #0d0d0d;
+  --surface-card: #111111;
+  --surface-inset: #0d0d0d;
+  --surface-track: #1e1e1e;
+  --border: #222222;
+  --chart-grid: #262626;
+  --text-primary: #cccccc;
+  --text-secondary: #999999;
+  --text-muted: #858585;
+  --text-faint: #737373;
+  --text-disabled: #666666;
+  --scrollbar-thumb: #2a2a2a;
+}
+
+.energy-app[data-theme="light"] {
+  color-scheme: light;
+  --app-bg: #f3f6f4;
+  --surface-header: #ffffff;
+  --surface-card: #ffffff;
+  --surface-inset: #f4f7f5;
+  --surface-track: #e5ebe7;
+  --border: #d8e1db;
+  --chart-grid: #dce4df;
+  --text-primary: #1b2620;
+  --text-secondary: #425149;
+  --text-muted: #506057;
+  --text-faint: #64736a;
+  --text-disabled: #718078;
+  --scrollbar-thumb: #c3cec7;
 }
 
 * {
   box-sizing: border-box;
   scrollbar-width: thin;
-  scrollbar-color: #2a2a2a transparent;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
 body {
