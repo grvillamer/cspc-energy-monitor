@@ -137,7 +137,7 @@ function StatRow({ label, value, unit, color = TEXT_PRIMARY }: { label: string; 
 
 function Card({ children, style = {} }: { children: React.ReactNode; style?: React.CSSProperties }) {
   return (
-    <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 20, ...style }}>
+    <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 11, padding: 14, ...style }}>
       {children}
     </div>
   );
@@ -190,19 +190,19 @@ function LiveMonitorTab() {
   const totalA = phases.reduce((s, p) => s + p.current, 0);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
 
       {/* Hero readout */}
-      <Card style={{ textAlign: "center", padding: "28px 20px", position: "relative", overflow: "hidden" }}>
+      <Card style={{ textAlign: "center", padding: "20px 14px", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse at 50% 0%, ${G}12 0%, transparent 70%)`, pointerEvents: "none" }} />
         <p style={{ color: TEXT_FAINT, fontSize: 11, fontFamily: MONO, textTransform: "uppercase", letterSpacing: 2, marginBottom: 8 }}>Total Active Power</p>
-        <p style={{ color: G, fontSize: 56, fontWeight: 700, fontFamily: MONO, lineHeight: 1, marginBottom: 4 }}>
+        <p style={{ color: G, fontSize: 42, fontWeight: 700, fontFamily: MONO, lineHeight: 1, marginBottom: 4 }}>
           {(total / 1000).toFixed(2)}<span style={{ fontSize: 22, color: G2, marginLeft: 6 }}>kW</span>
         </p>
         <p style={{ color: TEXT_FAINT, fontSize: 12, fontFamily: MONO, marginTop: 8 }}>
           {totalA.toFixed(1)} A total · {((total / 1000) * 24).toFixed(1)} kWh/day est.
         </p>
-        <div style={{ display: "flex", justifyContent: "center", gap: 24, marginTop: 16 }}>
+        <div style={{ display: "flex", justifyContent: "center", gap: 22, marginTop: 12 }}>
           {[{ label: "Voltage avg", val: (phases.reduce((s,p)=>s+p.voltage,0)/3).toFixed(1)+" V" },
             { label: "PF avg", val: (phases.reduce((s,p)=>s+p.pf,0)/3).toFixed(2) },
             { label: "Freq", val: "60.0 Hz" },
@@ -218,7 +218,7 @@ function LiveMonitorTab() {
       {/* Live chart */}
       <Card>
         <SectionTitle>Live Power (last 20s)</SectionTitle>
-        <ResponsiveContainer width="100%" height={120}>
+        <ResponsiveContainer width="100%" height={92}>
           <AreaChart data={liveHistory} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
             <defs>
               <linearGradient id="lgLive" x1="0" y1="0" x2="0" y2="1">
@@ -237,7 +237,7 @@ function LiveMonitorTab() {
       {/* Phase cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
         {phases.map((p) => (
-          <Card key={p.id}>
+          <Card key={p.id} style={{ padding: 13 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <div style={{ width: 8, height: 8, borderRadius: 4, background: p.color }} />
@@ -268,17 +268,17 @@ function LiveMonitorTab() {
       </div>
 
       {/* Device info */}
-      <Card>
-        <SectionTitle>Device — Shelly Pro 3EM</SectionTitle>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0 }}>
-          <StatRow label="Model" value="Shelly Pro 3EM" color={TEXT_SECONDARY} />
-          <StatRow label="Max Current" value="120" unit="A" color={G} />
-          <StatRow label="Phases" value="3" color={TEXT_SECONDARY} />
-          <StatRow label="Status" value="Online" color={G} />
-          <StatRow label="Location" value="CSPC Main" color={TEXT_SECONDARY} />
-          <StatRow label="Uptime" value="14d 7h 22m" color={TEXT_SECONDARY} />
-        </div>
-      </Card>
+          <Card>
+            <SectionTitle>Device — Shelly Pro 3EM</SectionTitle>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0 }}>
+              <StatRow label="Model" value="Shelly Pro 3EM" color={TEXT_SECONDARY} />
+              <StatRow label="Max Current" value="400" unit="A" color={G} />
+              <StatRow label="Phases" value="3" color={TEXT_SECONDARY} />
+              <StatRow label="Status" value="Planned integration" color={AMBER} />
+              <StatRow label="Location" value="Supply and Property Building" color={TEXT_SECONDARY} />
+              <StatRow label="Uptime" value="Simulated preview" color={TEXT_SECONDARY} />
+            </div>
+          </Card>
     </div>
   );
 }
@@ -729,28 +729,28 @@ export default function App() {
       {/* Header */}
       <header className="topbar" style={{
         background: HEADER_BG, borderBottom: `1px solid ${BORDER}`,
-        padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "8px 16px", display: "flex", alignItems: "center", justifyContent: "space-between",
         position: "sticky", top: 0, zIndex: 50,
       }}>
-        <div className="brand" style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 34, height: 34, borderRadius: 10, background: `${G}22`, border: `1px solid ${G}44`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
+        <div className="brand" style={{ display: "flex", alignItems: "center", gap: 9 }}>
+          <div style={{ width: 25, height: 25, borderRadius: 6, background: `${G}22`, border: `1px solid ${G}44`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>
             ⚡
           </div>
           <div>
-            <p style={{ color: TEXT_PRIMARY, fontWeight: 700, fontSize: 14, fontFamily: SANS }}>CSPC Energy Monitor</p>
-            <p style={{ color: TEXT_FAINT, fontSize: 11, fontFamily: MONO }}>Shelly Pro 3EM · 120A · Camarines Sur Polytechnic Colleges</p>
+            <p style={{ color: TEXT_PRIMARY, fontWeight: 700, fontSize: 11, fontFamily: SANS }}>CSPC Energy Monitor</p>
+            <p style={{ color: TEXT_FAINT, fontSize: 8, fontFamily: MONO }}>Shelly Pro 3EM · 400A · Green Building · Camarines Sur Polytechnic Colleges</p>
           </div>
         </div>
         <div className="header-status" style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 8, height: 8, borderRadius: 4, background: G, boxShadow: `0 0 6px ${G}` }} />
-          <span style={{ color: TEXT_FAINT, fontFamily: MONO, fontSize: 11 }}>Online</span>
+          <div style={{ width: 6, height: 6, borderRadius: 4, background: AMBER, boxShadow: `0 0 6px ${AMBER}` }} />
+          <span style={{ color: TEXT_FAINT, fontFamily: MONO, fontSize: 9 }}>Device integration planned</span>
           <button
             type="button"
             onClick={() => setTheme((current) => current === "dark" ? "light" : "dark")}
             aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
             title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
             style={{
-              width: 36, height: 36, borderRadius: 10, border: `1px solid ${BORDER}`,
+              width: 28, height: 28, borderRadius: 7, border: `1px solid ${BORDER}`,
               background: TRACK_BG, color: TEXT_PRIMARY, cursor: "pointer", fontSize: 17,
               display: "flex", alignItems: "center", justifyContent: "center",
             }}
@@ -761,7 +761,7 @@ export default function App() {
       </header>
 
       {/* Tab bar */}
-      <nav className="tabbar" style={{ background: HEADER_BG, borderBottom: `1px solid ${BORDER}`, padding: "0 24px", display: "flex", gap: 0, position: "sticky", top: 62, zIndex: 40, overflowX: "auto" }}>
+      <nav className="tabbar" style={{ background: HEADER_BG, borderBottom: `1px solid ${BORDER}`, padding: "0 16px", display: "flex", gap: 0, position: "sticky", top: 43, zIndex: 40, overflowX: "auto" }}>
         {(["Live Monitor","Consumption","Forecast","Model Comparison"] as Tab[]).map((t) => (
           <button
             key={t}
@@ -769,7 +769,7 @@ export default function App() {
             className="tab-button"
             style={{
               background: "none", border: "none", cursor: "pointer",
-              padding: "14px 18px", fontFamily: SANS, fontSize: 13, fontWeight: 600,
+              padding: "10px 13px", fontFamily: SANS, fontSize: 10, fontWeight: 600,
               color: tab === t ? G : TEXT_FAINT,
               borderBottom: tab === t ? `2px solid ${G}` : "2px solid transparent",
               display: "flex", alignItems: "center", gap: 7,
@@ -783,7 +783,12 @@ export default function App() {
       </nav>
 
       {/* Content */}
-      <main className="content-shell" style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 16px" }}>
+      <main className="content-shell" style={{ maxWidth: 768, margin: "0 auto", padding: "16px 12px" }}>
+        <div style={{ border: `1px solid ${AMBER}44`, background: `${AMBER}0d`, borderRadius: 8, padding: "10px 12px", marginBottom: 12 }}>
+          <p style={{ color: `${AMBER}99`, fontFamily: MONO, fontSize: 9, lineHeight: 1.5, margin: 0 }}>
+            Planned integration preview — the Shelly Pro 3EM is not yet connected. Values shown in this tab are simulated interface data and are not actual building measurements.
+          </p>
+        </div>
         {tab === "Live Monitor"     && <LiveMonitorTab />}
         {tab === "Consumption"      && <ConsumptionTab />}
         {tab === "Forecast"         && <ForecastTab />}
