@@ -192,6 +192,12 @@ function LiveMonitorTab() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
 
+      <div style={{ border: `1px solid ${AMBER}44`, background: `${AMBER}0d`, borderRadius: 8, padding: "10px 12px" }}>
+        <p style={{ color: `${AMBER}99`, fontFamily: MONO, fontSize: 9, lineHeight: 1.5, margin: 0 }}>
+          Planned integration preview — the Shelly Pro 3EM is not yet connected. Values shown in this tab are simulated interface data and are not actual building measurements.
+        </p>
+      </div>
+
       {/* Hero readout */}
       <Card style={{ textAlign: "center", padding: "20px 14px", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse at 50% 0%, ${G}12 0%, transparent 70%)`, pointerEvents: "none" }} />
@@ -272,7 +278,7 @@ function LiveMonitorTab() {
             <SectionTitle>Device — Shelly Pro 3EM</SectionTitle>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0 }}>
               <StatRow label="Model" value="Shelly Pro 3EM" color={TEXT_SECONDARY} />
-              <StatRow label="Max Current" value="400" unit="A" color={G} />
+              <StatRow label="Max Current" value="120" unit="A" color={G} />
               <StatRow label="Phases" value="3" color={TEXT_SECONDARY} />
               <StatRow label="Status" value="Planned integration" color={AMBER} />
               <StatRow label="Location" value="Supply and Property Building" color={TEXT_SECONDARY} />
@@ -306,17 +312,23 @@ function ConsumptionTab() {
   const interval = period === "Hourly" ? 0 : period === "Daily" ? 5 : period === "Weekly" ? 8 : 0;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+
+      <div style={{ border: `1px solid ${AMBER}44`, background: `${AMBER}0d`, borderRadius: 8, padding: "10px 12px" }}>
+        <p style={{ color: `${AMBER}99`, fontFamily: MONO, fontSize: 9, lineHeight: 1.5, margin: 0 }}>
+          Future building-monitoring view — hourly, daily, weekly, and monthly summaries will be derived from Shelly Pro 3EM readings after device integration. Current values are simulated.
+        </p>
+      </div>
 
       {/* Period selector */}
-      <div style={{ display: "flex", gap: 8 }}>
+      <div style={{ display: "flex", gap: 7 }}>
         {(["Hourly","Daily","Weekly","Monthly"] as Period[]).map((p) => (
           <Pill key={p} active={period === p} onClick={() => setPeriod(p)}>{p}</Pill>
         ))}
       </div>
 
       {/* KPI strip */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap: 8 }}>
         {[
           { label: "Total kWh", value: fmtK(+totalKwh.toFixed(0)), color: G },
           { label: "Total Cost", value: `₱${(totalCost/1000).toFixed(1)}k`, color: AMBER },
@@ -324,9 +336,9 @@ function ConsumptionTab() {
           { label: "Peak", value: peak.toLocaleString(), color: CYAN },
           { label: "Peak at", value: peakLabel, color: TEXT_PRIMARY },
         ].map((k) => (
-          <Card key={k.label} style={{ padding: 16 }}>
+          <Card key={k.label} style={{ padding: "12px 11px" }}>
             <p style={{ color: TEXT_FAINT, fontSize: 10, fontFamily: MONO, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6 }}>{k.label}</p>
-            <p style={{ color: k.color, fontFamily: MONO, fontSize: 20, fontWeight: 700 }}>{k.value}</p>
+            <p style={{ color: k.color, fontFamily: MONO, fontSize: 16, fontWeight: 700, whiteSpace: "nowrap" }}>{k.value}</p>
           </Card>
         ))}
       </div>
@@ -334,7 +346,7 @@ function ConsumptionTab() {
       {/* Energy chart */}
       <Card>
         <SectionTitle>Energy Consumption — {period}</SectionTitle>
-        <ResponsiveContainer width="100%" height={260}>
+        <ResponsiveContainer width="100%" height={205}>
           <BarChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
             <defs>
               <linearGradient id="lgBar" x1="0" y1="0" x2="0" y2="1">
@@ -354,7 +366,7 @@ function ConsumptionTab() {
       {/* Cost chart */}
       <Card>
         <SectionTitle>Electricity Cost (₱) — {period}</SectionTitle>
-        <ResponsiveContainer width="100%" height={180}>
+        <ResponsiveContainer width="100%" height={145}>
           <AreaChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
             <defs>
               <linearGradient id="lgCost" x1="0" y1="0" x2="0" y2="1">
@@ -524,181 +536,13 @@ function ForecastTab() {
 
 // ─── Model Comparison ─────────────────────────────────────────────────────────
 function ModelComparisonTab() {
-  const [period, setPeriod] = useState<Period>("Monthly");
-  const [ran, setRan] = useState(false);
-  const [met, setMet] = useState({ lstm: { mae: 0, rmse: 0, mape: 0 }, xgboost: { mae: 0, rmse: 0, mape: 0 } });
-  const [barData, setBarData] = useState<any[]>([]);
-
-  const datasets: Record<Period, { kwh: number; label: string }[]> = {
-    Hourly: HOURS, Daily: DAYS, Weekly: WEEKS, Monthly: MONTHS_DATA,
-  };
-
-  function compare() {
-    const fd = makeForecast(datasets[period]);
-    const m  = metrics(fd);
-    setMet(m);
-    setBarData([
-      { metric: "MAE",  LSTM: m.lstm.mae,  XGBoost: m.xgboost.mae },
-      { metric: "RMSE", LSTM: m.lstm.rmse, XGBoost: m.xgboost.rmse },
-      { metric: "MAPE", LSTM: m.lstm.mape, XGBoost: m.xgboost.mape },
-    ]);
-    setRan(true);
-  }
-
-  const winner: "lstm" | "xgboost" = ran
-    ? (met.xgboost.mae + met.xgboost.rmse + met.xgboost.mape < met.lstm.mae + met.lstm.rmse + met.lstm.mape ? "xgboost" : "lstm")
-    : "xgboost";
-
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-
-      {/* Controls */}
-      <Card>
-        <SectionTitle>Comparison Settings</SectionTitle>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "flex-end" }}>
-          <div>
-            <p style={{ color: TEXT_FAINT, fontSize: 10, fontFamily: MONO, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>Granularity</p>
-            <div style={{ display: "flex", gap: 6 }}>
-              {(["Hourly","Daily","Weekly","Monthly"] as Period[]).map((p) => (
-                <Pill key={p} active={period === p} onClick={() => { setPeriod(p); setRan(false); }}>{p}</Pill>
-              ))}
-            </div>
-          </div>
-          <button
-            onClick={compare}
-            style={{
-              background: TRACK_BG, color: VIOLET, fontFamily: MONO, fontWeight: 700, fontSize: 13,
-              border: `1px solid ${VIOLET}44`, borderRadius: 10, padding: "10px 24px", cursor: "pointer",
-              transition: "all .15s",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = `${VIOLET}22`; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = TRACK_BG; }}
-          >
-            ◈ Compare Models
-          </button>
-        </div>
-      </Card>
-
-      {!ran && (
-        <Card style={{ textAlign: "center", padding: "60px 20px" }}>
-          <p style={{ color: TEXT_DISABLED, fontFamily: MONO, fontSize: 13 }}>
-            Select granularity and press <span style={{ color: VIOLET }}>Compare Models</span>
-          </p>
-        </Card>
-      )}
-
-      {ran && (
-        <>
-          {/* Model cards */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14 }}>
-            {(["lstm","xgboost"] as const).map((m) => {
-              const isWinner = winner === m;
-              const color = m === "lstm" ? CYAN : VIOLET;
-              const mt = met[m];
-              return (
-                <Card key={m} style={{ border: isWinner ? `1px solid ${G}44` : `1px solid ${BORDER}`, position: "relative", overflow: "hidden" }}>
-                  {isWinner && (
-                    <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${G}, transparent)` }} />
-                  )}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                    <span style={{ color, fontFamily: MONO, fontSize: 16, fontWeight: 700, textTransform: "uppercase" }}>{m}</span>
-                    {isWinner && (
-                      <span style={{ background: `${G}22`, color: G, border: `1px solid ${G}44`, borderRadius: 20, fontSize: 10, fontFamily: MONO, fontWeight: 700, padding: "3px 10px" }}>
-                        ★ RECOMMENDED
-                      </span>
-                    )}
-                  </div>
-                  <p style={{ color: TEXT_FAINT, fontSize: 11, fontFamily: SANS, marginBottom: 16, lineHeight: 1.6 }}>
-                    {m === "lstm"
-                      ? "Deep learning · Sequential time windows · LSTM recurrent layers · TensorFlow/Keras"
-                      : "Gradient boosting · Lag + calendar features · Boosted decision trees · XGBoost library"}
-                  </p>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-                    {[
-                      { k: "MAE",  v: mt.mae,  u: "kWh" },
-                      { k: "RMSE", v: mt.rmse, u: "kWh" },
-                      { k: "MAPE", v: mt.mape, u: "%" },
-                    ].map((metric) => (
-                      <div key={metric.k} style={{ background: INSET_BG, borderRadius: 10, padding: "12px 8px", textAlign: "center" }}>
-                        <p style={{ color: TEXT_FAINT, fontFamily: MONO, fontSize: 9, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6 }}>{metric.k}</p>
-                        <p style={{ color: isWinner ? G : TEXT_SECONDARY, fontFamily: MONO, fontSize: 18, fontWeight: 700, marginBottom: 2 }}>{metric.v}</p>
-                        <p style={{ color: TEXT_DISABLED, fontSize: 9, fontFamily: MONO }}>{metric.u}</p>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-
-          {/* Bar chart */}
-          <Card>
-            <SectionTitle>Error Metrics — Side by Side</SectionTitle>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={barData} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
-                <XAxis dataKey="metric" tick={{ fill: TEXT_MUTED, fontSize: 11, fontFamily: MONO }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: TEXT_FAINT, fontSize: 10, fontFamily: MONO }} axisLine={false} tickLine={false} width={44} />
-                <Tooltip content={<Tip />} />
-                <Legend wrapperStyle={{ fontSize: 11, fontFamily: MONO, color: TEXT_MUTED }} />
-                <Bar dataKey="LSTM"    fill={CYAN}   radius={[4, 4, 0, 0]} />
-                <Bar dataKey="XGBoost" fill={VIOLET} radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
-
-          {/* Verdict */}
-          <Card style={{ border: `1px solid ${G}33`, position: "relative", overflow: "hidden" }}>
-            <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse at 0% 50%, ${G}08 0%, transparent 60%)`, pointerEvents: "none" }} />
-            <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: `${G}22`, border: `1px solid ${G}44`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 20 }}>
-                ★
-              </div>
-              <div>
-                <p style={{ color: G, fontFamily: MONO, fontWeight: 700, fontSize: 14, marginBottom: 6 }}>
-                  {winner === "xgboost" ? "XGBoost" : "LSTM"} is the Recommended Model
-                </p>
-                <p style={{ color: TEXT_MUTED, fontFamily: SANS, fontSize: 12, lineHeight: 1.7 }}>
-                  Based on {period.toLowerCase()} consumption data, {winner === "xgboost" ? "XGBoost" : "LSTM"} achieves lower MAE, RMSE, and MAPE.
-                  It is the more appropriate model for short-term electricity demand forecasting and institutional energy management at CSPC.
-                  Training set: Jan 2023 – Dec 2024 · Test set: Jan 2025 – Dec 2025.
-                </p>
-              </div>
-            </div>
-          </Card>
-
-          {/* Architecture comparison table */}
-          <Card>
-            <SectionTitle>Architecture Overview</SectionTitle>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-              <thead>
-                <tr>
-                  {["Parameter","LSTM","XGBoost"].map((h) => (
-                    <th key={h} style={{ textAlign: "left", padding: "8px 12px", color: TEXT_FAINT, fontFamily: MONO, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, borderBottom: `1px solid ${BORDER}` }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  ["Input type", "Sequential windows", "Feature matrix"],
-                  ["Algorithm", "Recurrent neural network", "Gradient boosting trees"],
-                  ["Library", "TensorFlow / Keras", "XGBoost + Scikit-learn"],
-                  ["Key hyperparams", "Layers, units, epochs", "n_estimators, max_depth, lr"],
-                  ["Feature engineering", "Normalization only", "Lags, calendar, rolling avg"],
-                  ["Handles seasonality", "Implicitly (sequence)", "Explicitly (features)"],
-                  ["Training time", "Slower", "Faster"],
-                ].map(([param, lstm, xgb]) => (
-                  <tr key={param} style={{ borderBottom: `1px solid ${BORDER}` }}>
-                    <td style={{ padding: "10px 12px", color: TEXT_MUTED, fontFamily: SANS }}>{param}</td>
-                    <td style={{ padding: "10px 12px", color: CYAN,   fontFamily: MONO, fontSize: 11 }}>{lstm}</td>
-                    <td style={{ padding: "10px 12px", color: VIOLET, fontFamily: MONO, fontSize: 11 }}>{xgb}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </Card>
-        </>
-      )}
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{ border: `1px solid ${AMBER}44`, background: `${AMBER}0d`, borderRadius: 10, padding: "14px 16px" }}>
+        <p style={{ color: `${AMBER}99`, fontFamily: MONO, fontSize: 10, lineHeight: 1.5, margin: 0 }}>
+          Model-comparison charts, rankings, MAE, RMSE, and MAPE are intentionally withheld until verified outputs are produced by the LSTM and XGBoost training scripts.
+        </p>
+      </div>
     </div>
   );
 }
@@ -715,16 +559,9 @@ const TAB_ICONS: Record<Tab, string> = {
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("Live Monitor");
-  const [theme, setTheme] = useState<"dark" | "light">(() =>
-    localStorage.getItem("energy-theme") === "light" ? "light" : "dark"
-  );
-
-  useEffect(() => {
-    localStorage.setItem("energy-theme", theme);
-  }, [theme]);
 
   return (
-    <div className="energy-app" data-theme={theme} style={{ minHeight: "100%", background: APP_BG, fontFamily: SANS, color: TEXT_PRIMARY }}>
+    <div className="energy-app" data-theme="dark" style={{ minHeight: "100%", background: APP_BG, fontFamily: SANS, color: TEXT_PRIMARY }}>
 
       {/* Header */}
       <header className="topbar" style={{
@@ -738,25 +575,12 @@ export default function App() {
           </div>
           <div>
             <p style={{ color: TEXT_PRIMARY, fontWeight: 700, fontSize: 11, fontFamily: SANS }}>CSPC Energy Monitor</p>
-            <p style={{ color: TEXT_FAINT, fontSize: 8, fontFamily: MONO }}>Shelly Pro 3EM · 400A · Green Building · Camarines Sur Polytechnic Colleges</p>
+            <p style={{ color: TEXT_FAINT, fontSize: 8, fontFamily: MONO }}>Shelly Pro 3EM · 120A · Supply &amp; Property Building · Camarines Sur Polytechnic Colleges</p>
           </div>
         </div>
         <div className="header-status" style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ width: 6, height: 6, borderRadius: 4, background: AMBER, boxShadow: `0 0 6px ${AMBER}` }} />
           <span style={{ color: TEXT_FAINT, fontFamily: MONO, fontSize: 9 }}>Device integration planned</span>
-          <button
-            type="button"
-            onClick={() => setTheme((current) => current === "dark" ? "light" : "dark")}
-            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-            title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-            style={{
-              width: 28, height: 28, borderRadius: 7, border: `1px solid ${BORDER}`,
-              background: TRACK_BG, color: TEXT_PRIMARY, cursor: "pointer", fontSize: 17,
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}
-          >
-            {theme === "dark" ? "☼" : "☾"}
-          </button>
         </div>
       </header>
 
@@ -784,11 +608,6 @@ export default function App() {
 
       {/* Content */}
       <main className="content-shell" style={{ maxWidth: 768, margin: "0 auto", padding: "16px 12px" }}>
-        <div style={{ border: `1px solid ${AMBER}44`, background: `${AMBER}0d`, borderRadius: 8, padding: "10px 12px", marginBottom: 12 }}>
-          <p style={{ color: `${AMBER}99`, fontFamily: MONO, fontSize: 9, lineHeight: 1.5, margin: 0 }}>
-            Planned integration preview — the Shelly Pro 3EM is not yet connected. Values shown in this tab are simulated interface data and are not actual building measurements.
-          </p>
-        </div>
         {tab === "Live Monitor"     && <LiveMonitorTab />}
         {tab === "Consumption"      && <ConsumptionTab />}
         {tab === "Forecast"         && <ForecastTab />}
