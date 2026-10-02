@@ -1,0 +1,18 @@
+month,selected_kwh,source_verified,notes
+2023-01,43800,Yes,Selected CASURECO III campus account value
+2023-02,66547,Yes,Selected CASURECO III campus account value
+2023-03,24504,Yes,Selected CASURECO III campus account value
+2023-04,24504,Yes,Selected CASURECO III campus account value
+2023-06,39777,Yes,Selected CASURECO III campus account value
+2023-07,34805,Yes,Selected CASURECO III campus account value
+2023-08,52234,Yes,Selected CASURECO III campus account value
+2023-09,53540,No,Selected value requires record-level review against duplicate September billing entries
+2023-11,37418,Yes,Selected CASURECO III campus account value
+2023-12,65568,No,Selected value requires record-level review against alternate December billing entry
+2024-05,72713,Yes,Selected CASURECO III campus account value
+2024-06,54488,Yes,Selected CASURECO III campus account value
+2024-07,47425,Yes,Selected CASURECO III campus account value
+2024-10,52524,No,Selected value requires record-level review against decimal/partial billing entries
+2024-12,59554,No,Selected value requires record-level review against decimal/partial billing entries
+2025-01,69997,Yes,Test record; held out of development training
+2025-02,70097,Yes,Test record; held out of development training

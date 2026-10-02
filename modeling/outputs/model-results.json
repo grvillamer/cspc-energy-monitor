@@ -1,0 +1,46 @@
+{
+  "status": "provisional",
+  "verified": false,
+  "verification_note": "Generated from the curated CSV with development-period linear interpolation; adviser approval and record-level review are still pending.",
+  "dataset": {
+    "source": "src/imports/cspc_data.csv",
+    "raw_evidence": "data/raw/cspc_data.xlsx",
+    "total_records": 17,
+    "development_records": 15,
+    "test_records": 2,
+    "test_months": [
+      "2025-01",
+      "2025-02"
+    ],
+    "missing_development_months": 9
+  },
+  "predictions": [
+    {
+      "month": "2025-01",
+      "actual": 69997.0,
+      "lstm": 60668.675,
+      "xgboost": 66214.062,
+      "persistence": 59554.0
+    },
+    {
+      "month": "2025-02",
+      "actual": 70097.0,
+      "lstm": 75253.812,
+      "xgboost": 70047.055,
+      "persistence": 69997.0
+    }
+  ],
+  "metrics": {
+    "lstm": {
+      "mae": 7242.569,
+      "rmse": 7536.921,
+      "mape": 10.342
+    },
+    "xgboost": {
+      "mae": 1916.442,
+      "rmse": 2675.174,
+      "mape": 2.738
+    }
+  },
+  "recommended_model": "xgboost"
+}

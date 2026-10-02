@@ -1,0 +1,14 @@
+{
+  "model": "LSTM",
+  "lookback_months": 3,
+  "predictions": [
+    {
+      "month": "2025-01",
+      "prediction": 60668.675
+    },
+    {
+      "month": "2025-02",
+      "prediction": 75253.812
+    }
+  ]
+}

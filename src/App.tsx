@@ -7,6 +7,7 @@ import {
   CartesianGrid, Tooltip,
   ResponsiveContainer, Legend,
 } from "recharts";
+import modelResults from "./data/model-results.json";
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 const G = "#00e676";        // Shelly green
@@ -137,7 +138,7 @@ function StatRow({ label, value, unit, color = TEXT_PRIMARY }: { label: string; 
 
 function Card({ children, style = {} }: { children: React.ReactNode; style?: React.CSSProperties }) {
   return (
-    <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 11, padding: 14, ...style }}>
+    <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 11, padding: 16, ...style }}>
       {children}
     </div>
   );
@@ -547,6 +548,92 @@ function ModelComparisonTab() {
   );
 }
 
+type VerifiedModelResults = {
+  verified: boolean;
+  verification_note: string;
+  recommended_model?: string;
+  predictions: { month: string; actual: number; lstm: number; xgboost: number; persistence?: number }[];
+  metrics: Record<string, { mae: number | null; rmse: number | null; mape: number | null }>;
+};
+
+const VERIFIED_RESULTS = modelResults as VerifiedModelResults;
+
+function WithheldResultsNotice({ message }: { message: string }) {
+  return (
+    <div style={{ border: `1px solid ${AMBER}44`, background: `${AMBER}0d`, borderRadius: 10, padding: "14px 16px" }}>
+      <p style={{ color: `${AMBER}99`, fontFamily: MONO, fontSize: 10, lineHeight: 1.5, margin: 0 }}>
+        {message}
+      </p>
+    </div>
+  );
+}
+
+function VerifiedForecastTab() {
+  if (!VERIFIED_RESULTS.predictions.length) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <WithheldResultsNotice message="Forecast charts and evaluation metrics are intentionally withheld until the LSTM and XGBoost training scripts produce verified results using the two testing records." />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      {!VERIFIED_RESULTS.verified && (
+        <WithheldResultsNotice message="Preliminary model outputs: the missing development months use documented linear interpolation, and results should be reviewed before being treated as final." />
+      )}
+      <Card>
+        <SectionTitle>Actual vs Predicted — Test Months Only</SectionTitle>
+        <ResponsiveContainer width="100%" height={240}>
+          <LineChart data={VERIFIED_RESULTS.predictions} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
+            <XAxis dataKey="month" tick={{ fill: TEXT_FAINT, fontSize: 10, fontFamily: MONO }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fill: TEXT_FAINT, fontSize: 10, fontFamily: MONO }} axisLine={false} tickLine={false} width={48} />
+            <Tooltip content={<Tip />} />
+            <Line type="monotone" dataKey="actual" name="Actual" stroke={TEXT_PRIMARY} strokeWidth={2} dot={{ r: 3, fill: TEXT_PRIMARY }} />
+            <Line type="monotone" dataKey="lstm" name="LSTM" stroke={CYAN} strokeWidth={2} strokeDasharray="6 3" dot={{ r: 3, fill: CYAN }} />
+            <Line type="monotone" dataKey="xgboost" name="XGBoost" stroke={VIOLET} strokeWidth={2} strokeDasharray="3 3" dot={{ r: 3, fill: VIOLET }} />
+            <Line type="monotone" dataKey="persistence" name="Persistence" stroke={AMBER} strokeWidth={2} strokeDasharray="2 3" dot={{ r: 3, fill: AMBER }} />
+          </LineChart>
+        </ResponsiveContainer>
+      </Card>
+    </div>
+  );
+}
+
+function VerifiedModelComparisonTab() {
+  if (!VERIFIED_RESULTS.predictions.length) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <WithheldResultsNotice message="Model-comparison charts, rankings, MAE, RMSE, and MAPE are intentionally withheld until verified outputs are produced by the LSTM and XGBoost training scripts." />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      {!VERIFIED_RESULTS.verified && (
+        <WithheldResultsNotice message="Preliminary model comparison: metrics use two test records and interpolated development data. Review source records and confirm the missing-data method before treating the ranking as final." />
+      )}
+      <div className="model-metric-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
+        {Object.entries(VERIFIED_RESULTS.metrics).map(([model, values]) => (
+          <Card key={model} style={{ padding: 12 }}>
+            <p style={{ color: model === "lstm" ? CYAN : VIOLET, fontFamily: MONO, fontSize: 12, fontWeight: 700, margin: "0 0 10px" }}>{model.toUpperCase()}</p>
+            <p style={{ color: TEXT_PRIMARY, fontFamily: MONO, fontSize: 11, margin: "4px 0" }}>MAE: {values.mae} kWh</p>
+            <p style={{ color: TEXT_PRIMARY, fontFamily: MONO, fontSize: 11, margin: "4px 0" }}>RMSE: {values.rmse} kWh</p>
+            <p style={{ color: TEXT_PRIMARY, fontFamily: MONO, fontSize: 11, margin: "4px 0" }}>MAPE: {values.mape}%</p>
+          </Card>
+        ))}
+      </div>
+      <Card>
+        <p style={{ color: G, fontFamily: MONO, fontWeight: 700, fontSize: 13, margin: 0 }}>
+          Recommended model: {VERIFIED_RESULTS.recommended_model ?? "Pending"}
+        </p>
+      </Card>
+    </div>
+  );
+}
+
 // ─── Root ──────────────────────────────────────────────────────────────────────
 type Tab = "Live Monitor" | "Consumption" | "Forecast" | "Model Comparison";
 
@@ -559,9 +646,11 @@ const TAB_ICONS: Record<Tab, string> = {
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("Live Monitor");
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const isLight = theme === "light";
 
   return (
-    <div className="energy-app" data-theme="dark" style={{ minHeight: "100%", background: APP_BG, fontFamily: SANS, color: TEXT_PRIMARY }}>
+    <div className="energy-app" data-theme={theme} style={{ minHeight: "100%", background: APP_BG, fontFamily: SANS, color: TEXT_PRIMARY }}>
 
       {/* Header */}
       <header className="topbar" style={{
@@ -579,6 +668,27 @@ export default function App() {
           </div>
         </div>
         <div className="header-status" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <button
+            type="button"
+            onClick={() => setTheme(isLight ? "dark" : "light")}
+            style={{
+              border: `1px solid ${BORDER}`,
+              background: isLight ? "#f5f5f5" : "#111111",
+              color: isLight ? TEXT_PRIMARY : TEXT_PRIMARY,
+              borderRadius: 999,
+              padding: "6px 10px",
+              fontFamily: MONO,
+              fontSize: 10,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+            aria-label={isLight ? "Switch to dark mode" : "Switch to light mode"}
+          >
+            <span>{isLight ? "☀" : "☾"}</span>
+            {isLight ? "Light" : "Dark"}
+          </button>
           <div style={{ width: 6, height: 6, borderRadius: 4, background: AMBER, boxShadow: `0 0 6px ${AMBER}` }} />
           <span style={{ color: TEXT_FAINT, fontFamily: MONO, fontSize: 9 }}>Device integration planned</span>
         </div>
@@ -607,11 +717,11 @@ export default function App() {
       </nav>
 
       {/* Content */}
-      <main className="content-shell" style={{ maxWidth: 768, margin: "0 auto", padding: "16px 12px" }}>
+      <main className="content-shell" style={{ maxWidth: 960, margin: "0 auto", padding: "20px 16px" }}>
         {tab === "Live Monitor"     && <LiveMonitorTab />}
         {tab === "Consumption"      && <ConsumptionTab />}
-        {tab === "Forecast"         && <ForecastTab />}
-        {tab === "Model Comparison" && <ModelComparisonTab />}
+        {tab === "Forecast"         && <VerifiedForecastTab />}
+        {tab === "Model Comparison" && <VerifiedModelComparisonTab />}
 
         <footer style={{ marginTop: 48, paddingTop: 24, borderTop: `1px solid ${BORDER}`, textAlign: "center" }}>
           <p style={{ color: TEXT_DISABLED, fontFamily: MONO, fontSize: 11, lineHeight: 1.7 }}>

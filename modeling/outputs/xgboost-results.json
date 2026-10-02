@@ -1,0 +1,13 @@
+{
+  "model": "XGBoost",
+  "predictions": [
+    {
+      "month": "2025-01",
+      "prediction": 66214.062
+    },
+    {
+      "month": "2025-02",
+      "prediction": 70047.055
+    }
+  ]
+}
