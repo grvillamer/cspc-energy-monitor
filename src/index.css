@@ -80,6 +80,26 @@ body {
   font-size: 12px !important;
 }
 
+.results-view [style*="font-size: 8px"],
+.results-view [style*="font-size: 9px"],
+.results-view [style*="font-size: 10px"] {
+  font-size: 14px !important;
+}
+
+.results-view [style*="font-size: 11px"],
+.results-view [style*="font-size: 12px"] {
+  font-size: 15px !important;
+}
+
+.results-view [style*="font-size: 13px"] {
+  font-size: 16px !important;
+}
+
+.results-view .recharts-cartesian-axis-tick-value,
+.results-view .recharts-legend-item-text {
+  font-size: 13px !important;
+}
+
 .topbar,
 .tabbar,
 .content-shell {

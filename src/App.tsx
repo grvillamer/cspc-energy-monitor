@@ -571,20 +571,20 @@ function WithheldResultsNotice({ message }: { message: string }) {
 function VerifiedForecastTab() {
   if (!VERIFIED_RESULTS.predictions.length) {
     return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div className="results-view" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <WithheldResultsNotice message="Forecast charts and evaluation metrics are intentionally withheld until the LSTM and XGBoost training scripts produce verified results using the two testing records." />
       </div>
     );
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <div className="results-view" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       {!VERIFIED_RESULTS.verified && (
         <WithheldResultsNotice message="Preliminary model outputs: the missing development months use documented linear interpolation, and results should be reviewed before being treated as final." />
       )}
       <Card>
         <SectionTitle>Actual vs Predicted — Test Months Only</SectionTitle>
-        <ResponsiveContainer width="100%" height={240}>
+        <ResponsiveContainer width="100%" height={280}>
           <LineChart data={VERIFIED_RESULTS.predictions} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
             <XAxis dataKey="month" tick={{ fill: TEXT_FAINT, fontSize: 10, fontFamily: MONO }} axisLine={false} tickLine={false} />
@@ -604,14 +604,14 @@ function VerifiedForecastTab() {
 function VerifiedModelComparisonTab() {
   if (!VERIFIED_RESULTS.predictions.length) {
     return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div className="results-view" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <WithheldResultsNotice message="Model-comparison charts, rankings, MAE, RMSE, and MAPE are intentionally withheld until verified outputs are produced by the LSTM and XGBoost training scripts." />
       </div>
     );
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <div className="results-view" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       {!VERIFIED_RESULTS.verified && (
         <WithheldResultsNotice message="Preliminary model comparison: metrics use two test records and interpolated development data. Review source records and confirm the missing-data method before treating the ranking as final." />
       )}
