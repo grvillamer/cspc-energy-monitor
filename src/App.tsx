@@ -67,19 +67,14 @@ const MONTHS_DATA = [
   return { label, kwh, cost: +(kwh * 10.5).toFixed(0) };
 });
 
-// Forecast generator
-function makeForecast(data: { kwh: number; label: string }[]) {
-  return data.map((d) => {
-    const a = d.kwh;
-    const lstmErr  = (Math.sin(Math.random() * 10) * 0.05);
-    const xgbErr   = (Math.cos(Math.random() * 8)  * 0.035);
-    return {
-      label: d.label,
-      actual: a,
-      lstm:    Math.round(a * (1 + lstmErr)),
-      xgboost: Math.round(a * (1 + xgbErr)),
-    };
-  });
+// Forecast data is intentionally deterministic: use the verified model outputs already saved in the repository.
+function makeVerifiedForecastData() {
+  return VERIFIED_RESULTS.predictions.map((entry) => ({
+    label: entry.month,
+    actual: entry.actual,
+    lstm: Math.round(entry.lstm),
+    xgboost: Math.round(entry.xgboost),
+  }));
 }
 
 function metrics(data: { actual: number; lstm: number; xgboost: number }[]) {
@@ -402,7 +397,7 @@ function ForecastTab() {
   };
 
   function runForecast() {
-    const data = makeForecast(datasets[period]);
+    const data = makeVerifiedForecastData();
     setForecastData(data);
     setMet(metrics(data));
     setRan(true);
