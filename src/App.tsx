@@ -669,7 +669,7 @@ export default function App() {
             style={{
               border: `1px solid ${BORDER}`,
               background: isLight ? "#f5f5f5" : "#111111",
-              color: isLight ? TEXT_PRIMARY : TEXT_PRIMARY,
+              color: isLight ? "#111827" : "#f3f4f6",
               borderRadius: 999,
               padding: "6px 10px",
               fontFamily: MONO,

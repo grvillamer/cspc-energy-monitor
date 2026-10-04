@@ -32,16 +32,16 @@ html, body, #root {
   --surface-header: #ffffff;
   --surface-card: #ffffff;
   --surface-inset: #f4f7f5;
-  --surface-track: #e5ebe7;
-  --border: #d8e1db;
-  --chart-grid: #dce4df;
-  --text-primary: #1b2620;
-  --text-secondary: #425149;
-  --text-muted: #506057;
-  --text-faint: #64736a;
-  --text-disabled: #718078;
-  --scrollbar-thumb: #c3cec7;
-  --page-glow: rgba(0, 150, 76, 0.025);
+  --surface-track: #e5e7eb;
+  --border: #d1d5db;
+  --chart-grid: #d7dde3;
+  --text-primary: #111827;
+  --text-secondary: #374151;
+  --text-muted: #4b5563;
+  --text-faint: #6b7280;
+  --text-disabled: #9ca3af;
+  --scrollbar-thumb: #cbd5e1;
+  --page-glow: rgba(0, 150, 76, 0.03);
 }
 
 * {
