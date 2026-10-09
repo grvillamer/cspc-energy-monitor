@@ -564,67 +564,44 @@ function WithheldResultsNotice({ message }: { message: string }) {
 }
 
 function VerifiedForecastTab() {
-  if (!VERIFIED_RESULTS.predictions.length) {
-    return (
-      <div className="results-view" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        <WithheldResultsNotice message="Forecast charts and evaluation metrics are intentionally withheld until the LSTM and XGBoost training scripts produce verified results using the two testing records." />
-      </div>
-    );
-  }
-
   return (
     <div className="results-view" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      {!VERIFIED_RESULTS.verified && (
-        <WithheldResultsNotice message="Preliminary model outputs: the missing development months use documented linear interpolation, and results should be reviewed before being treated as final." />
-      )}
-      <Card>
-        <SectionTitle>Actual vs Predicted — Test Months Only</SectionTitle>
-        <ResponsiveContainer width="100%" height={280}>
-          <LineChart data={VERIFIED_RESULTS.predictions} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
-            <XAxis dataKey="month" tick={{ fill: TEXT_FAINT, fontSize: 10, fontFamily: MONO }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fill: TEXT_FAINT, fontSize: 10, fontFamily: MONO }} axisLine={false} tickLine={false} width={48} />
-            <Tooltip content={<Tip />} />
-            <Line type="monotone" dataKey="actual" name="Actual" stroke={TEXT_PRIMARY} strokeWidth={2} dot={{ r: 3, fill: TEXT_PRIMARY }} />
-            <Line type="monotone" dataKey="lstm" name="LSTM" stroke={CYAN} strokeWidth={2} strokeDasharray="6 3" dot={{ r: 3, fill: CYAN }} />
-            <Line type="monotone" dataKey="xgboost" name="XGBoost" stroke={VIOLET} strokeWidth={2} strokeDasharray="3 3" dot={{ r: 3, fill: VIOLET }} />
-            <Line type="monotone" dataKey="persistence" name="Persistence" stroke={AMBER} strokeWidth={2} strokeDasharray="2 3" dot={{ r: 3, fill: AMBER }} />
-          </LineChart>
-        </ResponsiveContainer>
-      </Card>
+      <div
+        style={{
+          border: `1px solid ${AMBER}66`,
+          background: "rgba(255, 160, 0, 0.08)",
+          borderRadius: 12,
+          padding: "18px 18px",
+          color: "#f5c46b",
+          fontFamily: MONO,
+          fontSize: 14,
+          lineHeight: 1.5,
+        }}
+      >
+        Verified rolling one-month-ahead results for January and February 2025 will appear here after the Python scripts export the LSTM, XGBoost, and persistence-baseline predictions.
+      </div>
     </div>
   );
 }
 
 function VerifiedModelComparisonTab() {
-  if (!VERIFIED_RESULTS.predictions.length) {
-    return (
-      <div className="results-view" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        <WithheldResultsNotice message="Model-comparison charts, rankings, MAE, RMSE, and MAPE are intentionally withheld until verified outputs are produced by the LSTM and XGBoost training scripts." />
-      </div>
-    );
-  }
-
   return (
     <div className="results-view" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      {!VERIFIED_RESULTS.verified && (
-        <WithheldResultsNotice message="Preliminary model comparison: metrics use two test records and interpolated development data. Review source records and confirm the missing-data method before treating the ranking as final." />
-      )}
-      <div className="model-metric-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
-        {Object.entries(VERIFIED_RESULTS.metrics).map(([model, values]) => (
-          <Card key={model} style={{ padding: 12 }}>
-            <p style={{ color: model === "lstm" ? CYAN : VIOLET, fontFamily: MONO, fontSize: 12, fontWeight: 700, margin: "0 0 10px" }}>{model.toUpperCase()}</p>
-            <p style={{ color: TEXT_PRIMARY, fontFamily: MONO, fontSize: 11, margin: "4px 0" }}>MAE: {values.mae} kWh</p>
-            <p style={{ color: TEXT_PRIMARY, fontFamily: MONO, fontSize: 11, margin: "4px 0" }}>RMSE: {values.rmse} kWh</p>
-            <p style={{ color: TEXT_PRIMARY, fontFamily: MONO, fontSize: 11, margin: "4px 0" }}>MAPE: {values.mape}%</p>
-          </Card>
-        ))}
+      <div
+        style={{
+          border: `1px solid ${AMBER}66`,
+          background: "rgba(255, 160, 0, 0.08)",
+          borderRadius: 12,
+          padding: "18px 18px",
+          color: "#f5c46b",
+          fontFamily: MONO,
+          fontSize: 14,
+          lineHeight: 1.5,
+          width: "100%",
+        }}
+      >
+        Model-comparison charts, MAE, RMSE, and MAPE will appear after verified LSTM, XGBoost, and persistence-baseline outputs are imported. The preferred model will be identified from the lowest test errors.
       </div>
-      <Card>
-        <p style={{ color: G, fontFamily: MONO, fontWeight: 700, fontSize: 13, margin: 0 }}>
-          Recommended model: {VERIFIED_RESULTS.recommended_model ?? "Pending"}
-        </p>
-      </Card>
     </div>
   );
 }
@@ -640,8 +617,8 @@ const TAB_ICONS: Record<Tab, string> = {
 };
 
 export default function App() {
-  const [tab, setTab] = useState<Tab>("Live Monitor");
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [tab, setTab] = useState<Tab>("Forecast");
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
   const isLight = theme === "light";
 
   return (
