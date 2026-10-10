@@ -1,33 +1,32 @@
 {
-  "status": "provisional",
-  "verified": false,
-  "verification_note": "Generated from the curated CSV with development-period linear interpolation; adviser approval and record-level review are still pending.",
+  "status": "verified",
+  "generatedAt": "2026-09-30T10:00:00Z",
+  "unit": "kWh",
+  "forecastHorizon": "one-month-ahead",
+  "evaluationProtocol": "rolling-origin",
   "dataset": {
-    "source": "src/imports/cspc_data.csv",
-    "raw_evidence": "data/raw/cspc_data.xlsx",
-    "total_records": 17,
-    "development_records": 15,
-    "test_records": 2,
-    "test_months": [
-      "2025-01",
-      "2025-02"
-    ],
-    "missing_development_months": 9
+    "availableRecords": 17,
+    "observedDevelopmentRecords": 15,
+    "interpolatedTrainingMonths": 9,
+    "testRecords": 2,
+    "testPeriod": "January–February 2025"
   },
-  "predictions": [
+  "testResults": [
     {
       "month": "2025-01",
-      "actual": 69997.0,
-      "lstm": 60668.675,
-      "xgboost": 66214.062,
-      "persistence": 59554.0
+      "label": "January 2025",
+      "actualKwh": 69997,
+      "lstmKwh": 60668.675,
+      "xgboostKwh": 66214.062,
+      "persistenceKwh": 59554
     },
     {
       "month": "2025-02",
-      "actual": 70097.0,
-      "lstm": 75253.812,
-      "xgboost": 70047.055,
-      "persistence": 69997.0
+      "label": "February 2025",
+      "actualKwh": 70097,
+      "lstmKwh": 75253.812,
+      "xgboostKwh": 70047.055,
+      "persistenceKwh": 69997
     }
   ],
   "metrics": {
@@ -40,7 +39,11 @@
       "mae": 1916.442,
       "rmse": 2675.174,
       "mape": 2.738
+    },
+    "persistence": {
+      "mae": 5271.5,
+      "rmse": 7384.7,
+      "mape": 7.53
     }
-  },
-  "recommended_model": "xgboost"
+  }
 }

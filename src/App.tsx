@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Fragment } from "react";
 import {
   AreaChart, Area,
   BarChart, Bar,
@@ -7,7 +7,10 @@ import {
   CartesianGrid, Tooltip,
   ResponsiveContainer, Legend,
 } from "recharts";
-import modelResults from "./data/model-results.json";
+import modelResultsJson from "./data/model-results.json";
+import type { ModelResults, TestResult } from "./types/model-results";
+
+const VERIFIED_RESULTS = modelResultsJson as ModelResults;
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 const G = "#00e676";        // Shelly green
@@ -69,11 +72,12 @@ const MONTHS_DATA = [
 
 // Forecast data is intentionally deterministic: use the verified model outputs already saved in the repository.
 function makeVerifiedForecastData() {
-  return VERIFIED_RESULTS.predictions.map((entry) => ({
-    label: entry.month,
-    actual: entry.actual,
-    lstm: Math.round(entry.lstm),
-    xgboost: Math.round(entry.xgboost),
+  return VERIFIED_RESULTS.testResults.map((entry) => ({
+    label: entry.label,
+    month: entry.month,
+    actual: entry.actualKwh,
+    lstm: entry.lstmKwh,
+    xgboost: entry.xgboostKwh,
   }));
 }
 
@@ -288,8 +292,26 @@ function LiveMonitorTab() {
 // ─── Consumption ──────────────────────────────────────────────────────────────
 type Period = "Hourly" | "Daily" | "Weekly" | "Monthly";
 
+type MonthlyRate = {
+  id: number;
+  month: string;
+  advisoryDate: string;
+  effectiveFrom: string;
+  effectiveThrough: string;
+  rate: number;
+  source: string;
+};
+
 function ConsumptionTab() {
   const [period, setPeriod] = useState<Period>("Daily");
+  const [monthlyRates, setMonthlyRates] = useState<MonthlyRate[]>([]);
+  const [rateMonth, setRateMonth] = useState("");
+  const [advisoryDate, setAdvisoryDate] = useState("");
+  const [effectiveFrom, setEffectiveFrom] = useState("");
+  const [effectiveThrough, setEffectiveThrough] = useState("");
+  const [rateInput, setRateInput] = useState("");
+  const [rateSource, setRateSource] = useState("CASURECO III billing statement");
+  const [rateError, setRateError] = useState("");
 
   const datasets: Record<Period, { label: string; kwh: number; cost: number }[]> = {
     Hourly:  HOURS,
@@ -298,23 +320,133 @@ function ConsumptionTab() {
     Monthly: MONTHS_DATA,
   };
 
-  const data = datasets[period];
+  const selectedRate = monthlyRates[0];
+  const data = datasets[period].map((entry) => ({
+    ...entry,
+    cost: selectedRate ? +(entry.kwh * selectedRate.rate).toFixed(2) : 0,
+  }));
   const totalKwh = data.reduce((s, d) => s + d.kwh, 0);
   const totalCost = data.reduce((s, d) => s + d.cost, 0);
   const avg = totalKwh / data.length;
   const peak = Math.max(...data.map((d) => d.kwh));
   const peakLabel = data.find((d) => d.kwh === peak)?.label ?? "—";
 
+  const saveMonthlyRate = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setRateError("");
+
+    if (effectiveThrough < effectiveFrom) {
+      setRateError("Effective through date must be on or after the effective-from date.");
+      return;
+    }
+
+    const rate = Number(rateInput);
+    if (!Number.isFinite(rate) || rate <= 0) {
+      setRateError("Enter a rate greater than ₱0.00 per kWh.");
+      return;
+    }
+
+    const entry: MonthlyRate = {
+      id: Date.now(),
+      month: rateMonth,
+      advisoryDate,
+      effectiveFrom,
+      effectiveThrough,
+      rate,
+      source: rateSource.trim(),
+    };
+    setMonthlyRates((previous) => [entry, ...previous]);
+    setRateMonth("");
+    setAdvisoryDate("");
+    setEffectiveFrom("");
+    setEffectiveThrough("");
+    setRateInput("");
+  };
+
   const interval = period === "Hourly" ? 0 : period === "Daily" ? 5 : period === "Weekly" ? 8 : 0;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
 
       <div style={{ border: `1px solid ${AMBER}44`, background: `${AMBER}0d`, borderRadius: 8, padding: "10px 12px" }}>
         <p style={{ color: `${AMBER}99`, fontFamily: MONO, fontSize: 9, lineHeight: 1.5, margin: 0 }}>
           Future building-monitoring view — hourly, daily, weekly, and monthly summaries will be derived from Shelly Pro 3EM readings after device integration. Current values are simulated.
         </p>
       </div>
+
+      <Card style={{ padding: 20 }}>
+        <SectionTitle>Electricity Rate Settings</SectionTitle>
+        <p style={{ color: TEXT_SECONDARY, fontSize: 13, fontWeight: 600, margin: "0 0 4px" }}>
+          Monthly CASURECO III rate history
+        </p>
+        <p style={{ color: TEXT_MUTED, fontSize: 11, lineHeight: 1.5, margin: "0 0 16px" }}>
+          Enter the official advisory date and effective billing period. CASURECO III often publishes advisories near the 20th–28th, but the dashboard does not assume a fixed change date.
+        </p>
+
+        <form onSubmit={saveMonthlyRate} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div className="consumption-rate-fields">
+            {[
+              { label: "Rate advisory month", type: "month", value: rateMonth, change: setRateMonth },
+              { label: "Official advisory date", type: "date", value: advisoryDate, change: setAdvisoryDate },
+              { label: "Effective from", type: "date", value: effectiveFrom, change: setEffectiveFrom },
+              { label: "Effective through", type: "date", value: effectiveThrough, change: setEffectiveThrough },
+            ].map((field) => (
+              <label key={field.label} style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
+                <span style={{ color: TEXT_FAINT, fontFamily: MONO, fontSize: 9, textTransform: "uppercase", letterSpacing: 1.2 }}>
+                  {field.label}
+                </span>
+                <input
+                  aria-label={field.label}
+                  type={field.type}
+                  value={field.value}
+                  onChange={(event) => field.change(event.target.value)}
+                  required
+                  style={{ width: "100%", minWidth: 0, background: INSET_BG, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "10px 11px", color: TEXT_PRIMARY, fontFamily: MONO, fontSize: 12 }}
+                />
+              </label>
+            ))}
+            <label style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
+              <span style={{ color: TEXT_FAINT, fontFamily: MONO, fontSize: 9, textTransform: "uppercase", letterSpacing: 1.2 }}>
+                Rate (₱/kWh)
+              </span>
+              <input
+                aria-label="Rate in pesos per kilowatt-hour"
+                type="number"
+                min="0.01"
+                step="0.01"
+                placeholder="Enter billed rate"
+                value={rateInput}
+                onChange={(event) => setRateInput(event.target.value)}
+                required
+                style={{ width: "100%", minWidth: 0, background: INSET_BG, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "10px 11px", color: TEXT_PRIMARY, fontFamily: MONO, fontSize: 12 }}
+              />
+            </label>
+          </div>
+
+          <div className="consumption-rate-actions">
+            <label style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
+              <span style={{ color: TEXT_FAINT, fontFamily: MONO, fontSize: 9, textTransform: "uppercase", letterSpacing: 1.2 }}>
+                Source
+              </span>
+              <input
+                aria-label="Rate source"
+                value={rateSource}
+                onChange={(event) => setRateSource(event.target.value)}
+                required
+                style={{ width: "100%", minWidth: 0, background: INSET_BG, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "10px 11px", color: TEXT_PRIMARY, fontFamily: MONO, fontSize: 12 }}
+              />
+            </label>
+            <button
+              type="submit"
+              style={{ alignSelf: "flex-end", minHeight: 40, background: AMBER, color: "#171000", border: "none", borderRadius: 8, fontFamily: MONO, fontSize: 11, fontWeight: 700, padding: "10px 24px", cursor: "pointer" }}
+            >
+              Save monthly rate
+            </button>
+          </div>
+          {rateError && <p role="alert" style={{ color: AMBER, fontFamily: MONO, fontSize: 11, margin: 0 }}>{rateError}</p>}
+
+        </form>
+      </Card>
 
       {/* Period selector */}
       <div style={{ display: "flex", gap: 7 }}>
@@ -324,17 +456,17 @@ function ConsumptionTab() {
       </div>
 
       {/* KPI strip */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap: 8 }}>
+      <div className="consumption-kpi-grid" style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap: 12 }}>
         {[
           { label: "Total kWh", value: fmtK(+totalKwh.toFixed(0)), color: G },
-          { label: "Total Cost", value: `₱${(totalCost/1000).toFixed(1)}k`, color: AMBER },
+          { label: "Estimated Cost", value: selectedRate ? `₱${(totalCost/1000).toFixed(1)}k` : "Rate required", color: AMBER },
           { label: `Avg / ${period === "Hourly" ? "hr" : period === "Daily" ? "day" : period === "Weekly" ? "wk" : "mo"}`, value: avg.toFixed(1), color: TEXT_PRIMARY },
-          { label: "Peak", value: peak.toLocaleString(), color: CYAN },
+          { label: "Peak", value: peak.toFixed(1), color: CYAN },
           { label: "Peak at", value: peakLabel, color: TEXT_PRIMARY },
         ].map((k) => (
-          <Card key={k.label} style={{ padding: "12px 11px" }}>
-            <p style={{ color: TEXT_FAINT, fontSize: 10, fontFamily: MONO, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6 }}>{k.label}</p>
-            <p style={{ color: k.color, fontFamily: MONO, fontSize: 16, fontWeight: 700, whiteSpace: "nowrap" }}>{k.value}</p>
+          <Card key={k.label} style={{ padding: "16px 18px" }}>
+            <p style={{ color: TEXT_FAINT, fontSize: 10, fontFamily: MONO, textTransform: "uppercase", letterSpacing: 1.5, whiteSpace: "nowrap", margin: "0 0 8px" }}>{k.label}</p>
+            <p style={{ color: k.color, fontFamily: MONO, fontSize: 20, fontWeight: 700, whiteSpace: "nowrap", margin: 0 }}>{k.value}</p>
           </Card>
         ))}
       </div>
@@ -361,22 +493,30 @@ function ConsumptionTab() {
 
       {/* Cost chart */}
       <Card>
-        <SectionTitle>Electricity Cost (₱) — {period}</SectionTitle>
-        <ResponsiveContainer width="100%" height={145}>
-          <AreaChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
-            <defs>
-              <linearGradient id="lgCost" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={AMBER} stopOpacity={0.3} />
-                <stop offset="95%" stopColor={AMBER} stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
-            <XAxis dataKey="label" tick={{ fill: TEXT_FAINT, fontSize: 10, fontFamily: MONO }} axisLine={false} tickLine={false} interval={interval} />
-            <YAxis tick={{ fill: TEXT_FAINT, fontSize: 10, fontFamily: MONO }} axisLine={false} tickLine={false} width={50} />
-            <Tooltip content={<Tip />} />
-            <Area type="monotone" dataKey="cost" name="₱" stroke={AMBER} strokeWidth={2} fill="url(#lgCost)" dot={false} />
-          </AreaChart>
-        </ResponsiveContainer>
+        <SectionTitle>Estimated Energy Cost (₱) — {period}</SectionTitle>
+        {selectedRate ? (
+          <ResponsiveContainer width="100%" height={205}>
+            <AreaChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
+              <defs>
+                <linearGradient id="lgCost" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={AMBER} stopOpacity={0.3} />
+                  <stop offset="95%" stopColor={AMBER} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
+              <XAxis dataKey="label" tick={{ fill: TEXT_FAINT, fontSize: 10, fontFamily: MONO }} axisLine={false} tickLine={false} interval={interval} />
+              <YAxis tick={{ fill: TEXT_FAINT, fontSize: 10, fontFamily: MONO }} axisLine={false} tickLine={false} width={50} />
+              <Tooltip content={<Tip />} />
+              <Area type="monotone" dataKey="cost" name="₱" stroke={AMBER} strokeWidth={2} fill="url(#lgCost)" dot={false} />
+            </AreaChart>
+          </ResponsiveContainer>
+        ) : (
+          <div style={{ height: 165, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, textAlign: "center" }}>
+            <p style={{ color: TEXT_FAINT, fontFamily: MONO, fontSize: 11, lineHeight: 1.6, maxWidth: 420, margin: 0 }}>
+              Add and select a monthly CASURECO III rate to calculate estimated energy cost.
+            </p>
+          </div>
+        )}
       </Card>
     </div>
   );
@@ -530,28 +670,7 @@ function ForecastTab() {
   );
 }
 
-// ─── Model Comparison ─────────────────────────────────────────────────────────
-function ModelComparisonTab() {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div style={{ border: `1px solid ${AMBER}44`, background: `${AMBER}0d`, borderRadius: 10, padding: "14px 16px" }}>
-        <p style={{ color: `${AMBER}99`, fontFamily: MONO, fontSize: 10, lineHeight: 1.5, margin: 0 }}>
-          Model-comparison charts, rankings, MAE, RMSE, and MAPE are intentionally withheld until verified outputs are produced by the LSTM and XGBoost training scripts.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-type VerifiedModelResults = {
-  verified: boolean;
-  verification_note: string;
-  recommended_model?: string;
-  predictions: { month: string; actual: number; lstm: number; xgboost: number; persistence?: number }[];
-  metrics: Record<string, { mae: number | null; rmse: number | null; mape: number | null }>;
-};
-
-const VERIFIED_RESULTS = modelResults as VerifiedModelResults;
+const modelResults = modelResultsJson as ModelResults;
 
 function WithheldResultsNotice({ message }: { message: string }) {
   return (
@@ -563,44 +682,174 @@ function WithheldResultsNotice({ message }: { message: string }) {
   );
 }
 
-function VerifiedForecastTab() {
+function getResultState() {
+  const testResults = Array.isArray(modelResults?.testResults) ? modelResults.testResults as TestResult[] : [];
+  const hasValidStatus = modelResults?.status === "verified";
+  const hasValidRows = hasValidStatus && testResults.length === 2;
+  const hasValidMetrics = !!modelResults?.metrics && !!modelResults.metrics.lstm && !!modelResults.metrics.xgboost && !!modelResults.metrics.persistence;
+
+  if (hasValidRows && hasValidMetrics) {
+    return { state: "verified" as const, results: testResults };
+  }
+
+  if (modelResults?.status === "failed") {
+    return { state: "failed" as const, results: testResults };
+  }
+
+  return { state: "pending" as const, results: testResults };
+}
+
+function ModelComparisonTab() {
+  const resultState = getResultState();
+
+  if (resultState.state !== "verified") {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <WithheldResultsNotice
+          message={
+            resultState.state === "failed"
+              ? "The model-results file is incomplete or invalid. Please regenerate the verified exports from the Python modeling layer."
+              : "Model-comparison charts, MAE, RMSE, and MAPE will appear after verified LSTM, XGBoost, and persistence-baseline outputs are imported. The preferred model will be identified from the lowest test errors."
+          }
+        />
+      </div>
+    );
+  }
+
+  const rows = [
+    ["MAE (kWh)", modelResults.metrics.lstm.mae, modelResults.metrics.xgboost.mae, modelResults.metrics.persistence.mae],
+    ["RMSE (kWh)", modelResults.metrics.lstm.rmse, modelResults.metrics.xgboost.rmse, modelResults.metrics.persistence.rmse],
+    ["MAPE (%)", modelResults.metrics.lstm.mape, modelResults.metrics.xgboost.mape, modelResults.metrics.persistence.mape],
+  ] as const;
+
+  const preferredModel = (() => {
+    const candidates = [
+      { name: "LSTM", metrics: modelResults.metrics.lstm },
+      { name: "XGBoost", metrics: modelResults.metrics.xgboost },
+    ];
+
+    return candidates.reduce((best, current) => {
+      const bestScore = [best.metrics.mae, best.metrics.rmse, best.metrics.mape];
+      const currentScore = [current.metrics.mae, current.metrics.rmse, current.metrics.mape];
+      const better = currentScore[0] < bestScore[0] ||
+        (currentScore[0] === bestScore[0] && (currentScore[1] < bestScore[1] || (currentScore[1] === bestScore[1] && currentScore[2] < bestScore[2])));
+      return better ? current : best;
+    }, candidates[0]);
+  })();
+
   return (
-    <div className="results-view" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div
-        style={{
-          border: `1px solid ${AMBER}66`,
-          background: "rgba(255, 160, 0, 0.08)",
-          borderRadius: 12,
-          padding: "18px 18px",
-          color: "#f5c46b",
-          fontFamily: MONO,
-          fontSize: 14,
-          lineHeight: 1.5,
-        }}
-      >
-        Verified rolling one-month-ahead results for January and February 2025 will appear here after the Python scripts export the LSTM, XGBoost, and persistence-baseline predictions.
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{ border: `1px solid ${G}55`, background: `${G}14`, borderRadius: 10, padding: "14px 16px" }}>
+        <p style={{ color: G, fontFamily: MONO, fontSize: 11, lineHeight: 1.5, margin: 0 }}>
+          Preferred forecasting model: <strong>{preferredModel.name}</strong>
+        </p>
+        <p style={{ color: TEXT_SECONDARY, fontFamily: MONO, fontSize: 10, lineHeight: 1.5, margin: "6px 0 0" }}>
+          {preferredModel.name} produced the lowest MAE, RMSE, and MAPE among the learning models during validation. The persistence model is retained only as a benchmark reference.
+        </p>
+      </div>
+
+      <Card style={{ padding: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1.2fr repeat(3, minmax(0, 1fr))", gap: 8 }}>
+          <div style={{ color: TEXT_FAINT, fontFamily: MONO, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.4, padding: "8px 6px" }}>Metric</div>
+          <div style={{ color: CYAN, fontFamily: MONO, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.4, padding: "8px 6px" }}>LSTM</div>
+          <div style={{ color: VIOLET, fontFamily: MONO, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.4, padding: "8px 6px" }}>XGBoost</div>
+          <div style={{ color: AMBER, fontFamily: MONO, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.4, padding: "8px 6px" }}>Persistence</div>
+
+          {rows.map(([metric, lstm, xgb, persist], idx) => (
+            <Fragment key={metric}>
+              <div style={{ color: TEXT_PRIMARY, fontFamily: MONO, fontSize: 11, padding: "8px 6px", borderTop: idx === 0 ? "none" : `1px solid ${BORDER}` }}>{metric}</div>
+              <div style={{ color: CYAN, fontFamily: MONO, fontSize: 11, padding: "8px 6px", borderTop: idx === 0 ? "none" : `1px solid ${BORDER}` }}>{Number(lstm).toFixed(metric.includes("MAPE") ? 2 : 1)}</div>
+              <div style={{ color: VIOLET, fontFamily: MONO, fontSize: 11, padding: "8px 6px", borderTop: idx === 0 ? "none" : `1px solid ${BORDER}` }}>{Number(xgb).toFixed(metric.includes("MAPE") ? 2 : 1)}</div>
+              <div style={{ color: AMBER, fontFamily: MONO, fontSize: 11, padding: "8px 6px", borderTop: idx === 0 ? "none" : `1px solid ${BORDER}` }}>{Number(persist).toFixed(metric.includes("MAPE") ? 2 : 1)}</div>
+            </Fragment>
+          ))}
+        </div>
+      </Card>
+
+      <div style={{ border: `1px solid ${AMBER}44`, background: `${AMBER}0d`, borderRadius: 10, padding: "14px 16px" }}>
+        <p style={{ color: `${AMBER}99`, fontFamily: MONO, fontSize: 10, lineHeight: 1.5, margin: 0 }}>
+          Lower error values indicate stronger predictive performance. The preferred learning model is selected automatically from the lowest MAE, RMSE, and MAPE among LSTM and XGBoost, while persistence remains a baseline comparison only.
+        </p>
       </div>
     </div>
   );
 }
 
 function VerifiedModelComparisonTab() {
+  return <ModelComparisonTab />;
+}
+
+function VerifiedForecastTab() {
+  const resultState = getResultState();
+
+  if (resultState.state !== "verified") {
+    return (
+      <div className="results-view" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <WithheldResultsNotice
+          message={
+            resultState.state === "failed"
+              ? "The verified result file is unavailable or invalid. Please regenerate the exported Python results before displaying forecast outputs."
+              : "Verified rolling one-month-ahead results for January and February 2025 will appear here after the Python scripts export the LSTM, XGBoost, and persistence-baseline predictions."
+          }
+        />
+      </div>
+    );
+  }
+
+  const chartData = modelResults.testResults.map((entry) => ({
+    month: entry.month,
+    label: entry.label,
+    actual: entry.actualKwh,
+    lstm: entry.lstmKwh,
+    xgboost: entry.xgboostKwh,
+    persistence: entry.persistenceKwh,
+  }));
+
   return (
     <div className="results-view" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div
-        style={{
-          border: `1px solid ${AMBER}66`,
-          background: "rgba(255, 160, 0, 0.08)",
-          borderRadius: 12,
-          padding: "18px 18px",
-          color: "#f5c46b",
-          fontFamily: MONO,
-          fontSize: 14,
-          lineHeight: 1.5,
-          width: "100%",
-        }}
-      >
-        Model-comparison charts, MAE, RMSE, and MAPE will appear after verified LSTM, XGBoost, and persistence-baseline outputs are imported. The preferred model will be identified from the lowest test errors.
+      <div style={{ border: `1px solid ${AMBER}66`, background: "rgba(255, 160, 0, 0.08)", borderRadius: 12, padding: "12px 14px", color: "#f5c46b", fontFamily: MONO, fontSize: 12, lineHeight: 1.5 }}>
+        One-month-ahead forecasting results · Evaluation period: January–February 2025 · Validation protocol: rolling-origin · Unit: kWh
+      </div>
+
+      <Card>
+        <SectionTitle>Actual vs Forecasted Consumption — January–February 2025</SectionTitle>
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
+            <XAxis dataKey="month" tick={{ fill: TEXT_FAINT, fontSize: 10, fontFamily: MONO }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fill: TEXT_FAINT, fontSize: 10, fontFamily: MONO }} axisLine={false} tickLine={false} width={48} />
+            <Tooltip content={<Tip />} />
+            <Line type="monotone" dataKey="actual" name="Actual" stroke={TEXT_PRIMARY} strokeWidth={2} dot={{ r: 4, fill: TEXT_PRIMARY }} />
+            <Line type="monotone" dataKey="lstm" name="LSTM" stroke={CYAN} strokeWidth={2} dot={{ r: 4, fill: CYAN }} />
+            <Line type="monotone" dataKey="xgboost" name="XGBoost" stroke={VIOLET} strokeWidth={2} dot={{ r: 4, fill: VIOLET }} />
+            <Line type="monotone" dataKey="persistence" name="Persistence" stroke={AMBER} strokeWidth={2} dot={{ r: 4, fill: AMBER }} />
+          </LineChart>
+        </ResponsiveContainer>
+      </Card>
+
+      <Card style={{ padding: 12 }}>
+        <SectionTitle>Forecast Output Table</SectionTitle>
+        <div style={{ display: "grid", gridTemplateColumns: "1.2fr repeat(4, minmax(0, 1fr))", gap: 8, fontFamily: MONO, fontSize: 11 }}>
+          <div style={{ color: TEXT_FAINT, padding: "8px 6px", textTransform: "uppercase", letterSpacing: 1.2 }}>Month</div>
+          <div style={{ color: TEXT_FAINT, padding: "8px 6px", textTransform: "uppercase", letterSpacing: 1.2 }}>Actual</div>
+          <div style={{ color: CYAN, padding: "8px 6px", textTransform: "uppercase", letterSpacing: 1.2 }}>LSTM</div>
+          <div style={{ color: VIOLET, padding: "8px 6px", textTransform: "uppercase", letterSpacing: 1.2 }}>XGBoost</div>
+          <div style={{ color: AMBER, padding: "8px 6px", textTransform: "uppercase", letterSpacing: 1.2 }}>Persistence</div>
+
+          {modelResults.testResults.map((row, index) => (
+            <Fragment key={row.month}>
+              <div style={{ color: TEXT_PRIMARY, padding: "8px 6px", borderTop: index === 0 ? "none" : `1px solid ${BORDER}` }}>{row.label}</div>
+              <div style={{ color: TEXT_PRIMARY, padding: "8px 6px", borderTop: index === 0 ? "none" : `1px solid ${BORDER}` }}>{row.actualKwh.toLocaleString()} kWh</div>
+              <div style={{ color: CYAN, padding: "8px 6px", borderTop: index === 0 ? "none" : `1px solid ${BORDER}` }}>{row.lstmKwh.toLocaleString()} kWh</div>
+              <div style={{ color: VIOLET, padding: "8px 6px", borderTop: index === 0 ? "none" : `1px solid ${BORDER}` }}>{row.xgboostKwh.toLocaleString()} kWh</div>
+              <div style={{ color: AMBER, padding: "8px 6px", borderTop: index === 0 ? "none" : `1px solid ${BORDER}` }}>{row.persistenceKwh.toLocaleString()} kWh</div>
+            </Fragment>
+          ))}
+        </div>
+      </Card>
+
+      <div style={{ border: `1px solid ${AMBER}66`, background: "rgba(255, 160, 0, 0.05)", borderRadius: 12, padding: "12px 14px", color: TEXT_PRIMARY, fontFamily: MONO, fontSize: 11, lineHeight: 1.5 }}>
+        Development series: 15 observed months and 9 interpolated months · Test set: 2 observed months · Verified model outputs generated: {new Date(modelResults.generatedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
       </div>
     </div>
   );
@@ -689,7 +938,7 @@ export default function App() {
       </nav>
 
       {/* Content */}
-      <main className="content-shell" style={{ maxWidth: 960, margin: "0 auto", padding: "20px 16px" }}>
+      <main className="content-shell" style={{ maxWidth: tab === "Consumption" ? 1220 : 960, margin: "0 auto", padding: "20px 16px" }}>
         {tab === "Live Monitor"     && <LiveMonitorTab />}
         {tab === "Consumption"      && <ConsumptionTab />}
         {tab === "Forecast"         && <VerifiedForecastTab />}

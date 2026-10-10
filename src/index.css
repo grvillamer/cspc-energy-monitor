@@ -106,6 +106,19 @@ body {
   width: 100%;
 }
 
+.consumption-rate-fields {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.consumption-rate-actions {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+
 .tabbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -149,6 +162,14 @@ body {
   .model-metric-grid {
     grid-template-columns: minmax(0, 1fr) !important;
   }
+
+  .consumption-rate-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .consumption-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
 }
 
 @media (max-width: 480px) {
@@ -162,5 +183,18 @@ body {
 
   .tab-button {
     gap: 4px !important;
+  }
+
+  .consumption-rate-fields,
+  .consumption-rate-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .consumption-rate-actions button {
+    width: 100%;
+  }
+
+  .consumption-kpi-grid > :last-child {
+    grid-column: 1 / -1;
   }
 }
