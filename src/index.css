@@ -22,6 +22,7 @@ html, body, #root {
   --text-muted: #858585;
   --text-faint: #737373;
   --text-disabled: #666666;
+  --text-warning: #f5c46b;
   --scrollbar-thumb: #2a2a2a;
   --page-glow: rgba(0, 230, 118, 0.025);
 }
@@ -36,10 +37,11 @@ html, body, #root {
   --border: #d1d5db;
   --chart-grid: #d7dde3;
   --text-primary: #111827;
-  --text-secondary: #374151;
-  --text-muted: #4b5563;
-  --text-faint: #6b7280;
-  --text-disabled: #9ca3af;
+  --text-secondary: #1f2937;
+  --text-muted: #374151;
+  --text-faint: #4b5563;
+  --text-disabled: #6b7280;
+  --text-warning: #8a4b00;
   --scrollbar-thumb: #cbd5e1;
   --page-glow: rgba(0, 150, 76, 0.03);
 }
@@ -119,6 +121,655 @@ body {
   align-items: end;
 }
 
+.consumption-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: none !important;
+  height: calc(100dvh - 98px);
+  min-height: 0;
+  padding: 12px 16px 0 !important;
+  overflow: hidden;
+}
+
+.consumption-layout {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+}
+
+.consumption-notice {
+  padding: 8px 12px !important;
+}
+
+.energy-app .consumption-notice p {
+  font-size: 10px !important;
+}
+
+.consumption-workspace {
+  display: grid;
+  grid-template-columns: minmax(340px, 0.38fr) minmax(0, 0.62fr);
+  gap: 12px;
+  min-height: 0;
+}
+
+.consumption-settings {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.consumption-settings > p:nth-child(2) {
+  font-size: 14px !important;
+}
+
+.consumption-settings-description {
+  font-size: 11px !important;
+  margin-bottom: 10px !important;
+}
+
+.consumption-rate-fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 10px;
+}
+
+.consumption-rate-form {
+  gap: 8px !important;
+}
+
+.consumption-rate-form label {
+  gap: 4px !important;
+}
+
+.consumption-rate-form label > span {
+  font-size: 9px !important;
+}
+
+.consumption-rate-form input {
+  padding: 7px 9px !important;
+  font-size: 11px !important;
+}
+
+.consumption-rate-actions {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+.consumption-rate-actions button {
+  width: 100%;
+  min-height: 34px !important;
+  padding: 7px 12px !important;
+}
+
+.consumption-rate-history {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 48px;
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.consumption-rate-history-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--text-faint);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.consumption-rate-empty {
+  margin: auto 0;
+  color: var(--text-faint);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  text-align: center;
+}
+
+.consumption-rate-list {
+  margin-top: 8px;
+  overflow: auto;
+}
+
+.consumption-rate-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+
+.consumption-rate-entry > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.consumption-rate-entry > div span {
+  color: var(--text-faint);
+  font-size: 9px;
+}
+
+.consumption-dashboard {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 10px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.consumption-period-selector {
+  align-items: center;
+  min-height: 34px;
+}
+
+.consumption-period-selector button {
+  padding: 6px 14px !important;
+  font-size: 11px !important;
+}
+
+.consumption-kpi-grid {
+  gap: 8px !important;
+}
+
+.consumption-kpi-grid > div {
+  min-width: 0;
+  padding: 10px 12px !important;
+}
+
+.consumption-kpi-grid > div > p:first-child {
+  overflow: hidden;
+  font-size: 9px !important;
+  letter-spacing: 1px !important;
+  text-overflow: ellipsis;
+}
+
+.consumption-kpi-grid > div > p:last-child {
+  overflow: hidden;
+  font-size: 16px !important;
+  text-overflow: ellipsis;
+}
+
+.consumption-charts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.consumption-chart {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.consumption-chart > p:first-child {
+  flex: 0 0 auto;
+  margin-bottom: 8px;
+}
+
+.consumption-chart > .recharts-responsive-container,
+.consumption-cost-empty {
+  flex: 1;
+  min-height: 0;
+}
+
+.consumption-footer {
+  flex: 0 0 auto;
+  margin-top: 8px !important;
+  padding: 8px 0 4px !important;
+}
+
+.consumption-footer p {
+  font-size: 10px !important;
+  line-height: 1.5 !important;
+}
+
+.forecast-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: none !important;
+  height: calc(100dvh - 98px);
+  min-height: 0;
+  padding: 14px 22px 0 !important;
+  overflow: hidden;
+}
+
+.forecast-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(340px, 0.98fr);
+  flex: 1;
+  gap: 12px;
+  min-height: 0;
+}
+
+.forecast-main-panel,
+.forecast-exports-panel {
+  min-width: 0;
+  min-height: 0;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-card);
+}
+
+.forecast-main-panel {
+  display: grid;
+  grid-template-rows: auto minmax(150px, 1fr) auto auto;
+  gap: 12px;
+  overflow: hidden;
+  background-image: radial-gradient(ellipse at 12% 0%, var(--page-glow), transparent 48%);
+}
+
+.forecast-intro {
+  min-width: 0;
+}
+
+.forecast-eyebrow {
+  margin: 0 0 8px;
+  color: var(--green, #00e676);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px !important;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.forecast-intro h1 {
+  margin: 0 0 8px;
+  color: var(--text-primary);
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(20px, 2.1vw, 30px);
+  line-height: 1.15;
+}
+
+.forecast-intro > p:last-child {
+  max-width: 760px;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px !important;
+  line-height: 1.55;
+}
+
+.forecast-chart-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-inset);
+}
+
+.forecast-panel-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.forecast-panel-heading > p:first-child {
+  margin-bottom: 4px;
+  font-size: 10px !important;
+}
+
+.forecast-panel-heading > span {
+  color: var(--text-faint);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+}
+
+.forecast-chart-panel > .recharts-responsive-container {
+  flex: 1;
+  min-height: 0;
+}
+
+.forecast-output-table {
+  min-width: 0;
+}
+
+.forecast-output-grid {
+  display: grid;
+  grid-template-columns: minmax(100px, 1.2fr) repeat(4, minmax(0, 1fr));
+  gap: 0 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px !important;
+}
+
+.forecast-table-heading,
+.forecast-table-cell {
+  min-width: 0;
+  padding: 5px 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.forecast-table-heading {
+  color: var(--text-faint);
+  font-size: 9px !important;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.forecast-table-cell {
+  color: var(--text-primary);
+  border-top: 1px solid var(--border);
+}
+
+.forecast-lstm {
+  color: #00bcd4;
+}
+
+.forecast-xgboost {
+  color: #7c3aed;
+}
+
+.forecast-persistence {
+  color: #ffa000;
+}
+
+.forecast-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.forecast-summary-grid > div {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+  min-height: 58px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface-inset);
+}
+
+.forecast-summary-grid span {
+  color: var(--text-faint);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.forecast-summary-grid strong {
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.forecast-exports-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+}
+
+.forecast-exports-panel > p:first-child {
+  margin-bottom: 2px;
+  font-size: 10px !important;
+}
+
+.forecast-export-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.forecast-export-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-inset);
+}
+
+.forecast-export-number {
+  display: grid;
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid;
+  border-radius: 9px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.forecast-export-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.forecast-export-copy strong {
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: 12px !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.forecast-export-copy > span {
+  color: var(--text-faint);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+}
+
+.forecast-export-copy small {
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+}
+
+.forecast-export-status {
+  flex: 0 0 auto;
+  color: var(--text-warning);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+}
+
+.forecast-verified-note {
+  margin-top: 2px;
+  padding: 12px;
+  border: 1px solid rgba(255, 160, 0, 0.32);
+  border-radius: 12px;
+  background: rgba(255, 160, 0, 0.06);
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.forecast-verified-note strong {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.forecast-footer {
+  flex: 0 0 auto;
+  margin-top: 8px !important;
+  padding: 8px 0 4px !important;
+}
+
+.forecast-footer p {
+  font-size: 10px !important;
+  line-height: 1.5 !important;
+}
+
+.live-monitor-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.38fr) minmax(0, 1fr);
+  grid-template-areas: "main phases";
+  align-items: start;
+  gap: 10px;
+}
+
+.live-monitor-content {
+  max-width: none !important;
+  padding: 22px 14px 0 !important;
+}
+
+.live-monitor-content > footer {
+  margin-top: 8px !important;
+  padding-top: 8px !important;
+}
+
+.energy-app .live-monitor-notice p {
+  font-size: 9px !important;
+}
+
+.live-monitor-main {
+  grid-area: main;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.live-monitor-phases {
+  grid-area: phases;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  min-width: 0;
+}
+
+.live-monitor-phases > div {
+  padding-top: 14px !important;
+  padding-bottom: 14px !important;
+}
+
+.live-monitor-device-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 12px;
+}
+
+.live-monitor-device-grid > div {
+  display: grid !important;
+  grid-template-columns: 65px minmax(0, 1fr);
+  gap: 8px;
+  min-width: 0;
+  padding: 4px 0 !important;
+}
+
+.live-monitor-device > p:first-child {
+  margin-bottom: 6px;
+}
+
+.live-monitor-device {
+  padding: 8px 14px !important;
+}
+
+.live-monitor-hero > p:first-of-type {
+  font-size: 10px !important;
+  letter-spacing: 1.5px !important;
+  margin-bottom: 2px !important;
+}
+
+.live-monitor-hero > p:nth-of-type(2) {
+  font-size: 34px !important;
+  line-height: 1 !important;
+  margin-bottom: 2px !important;
+}
+
+.live-monitor-hero > p:nth-of-type(2) > span {
+  font-size: 18px !important;
+}
+
+.live-monitor-hero > p:nth-of-type(3) {
+  font-size: 10px !important;
+  margin-top: 2px !important;
+}
+
+.live-monitor-hero > div:last-child {
+  gap: 18px !important;
+  margin-top: 6px !important;
+}
+
+.live-monitor-hero > div:last-child p:first-child {
+  font-size: 13px !important;
+}
+
+.live-monitor-hero > div:last-child p:last-child {
+  font-size: 9px !important;
+}
+
+.live-monitor-device-grid > div > span:first-child {
+  font-size: 11px !important;
+  white-space: nowrap;
+}
+
+.live-monitor-device-grid > div > span:last-child {
+  min-width: 0;
+  font-size: 12px !important;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.phase-reading-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 12px;
+}
+
+.phase-reading-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+  line-height: 1.15;
+  border-bottom: 1px solid var(--border);
+}
+
+.phase-reading-row:last-child {
+  grid-column: 1 / -1;
+}
+
+.phase-reading-label {
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.phase-reading-value {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 .tabbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -129,6 +780,89 @@ body {
 }
 
 @media (max-width: 768px) {
+  .forecast-content {
+    height: auto;
+    min-height: calc(100dvh - 98px);
+    padding: 16px 12px !important;
+    overflow: visible;
+  }
+
+  .forecast-workspace {
+    grid-template-columns: minmax(0, 1fr);
+    flex: none;
+  }
+
+  .forecast-main-panel {
+    grid-template-rows: auto 260px auto auto;
+  }
+
+  .forecast-exports-panel {
+    min-height: auto;
+  }
+
+  .forecast-footer {
+    margin-top: 24px !important;
+    padding-top: 16px !important;
+  }
+
+  .consumption-content {
+    height: auto;
+    min-height: calc(100dvh - 98px);
+    padding: 16px 12px !important;
+    overflow: visible;
+  }
+
+  .consumption-layout {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+  }
+
+  .consumption-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .consumption-settings {
+    overflow: visible;
+  }
+
+  .consumption-rate-history {
+    min-height: 100px;
+  }
+
+  .consumption-dashboard {
+    grid-template-rows: auto auto auto;
+  }
+
+  .consumption-charts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .consumption-chart {
+    min-height: 260px;
+  }
+
+  .consumption-footer {
+    margin-top: 24px !important;
+    padding-top: 16px !important;
+  }
+
+  .live-monitor-content {
+    max-width: 960px !important;
+    padding: 16px 12px !important;
+  }
+
+  .live-monitor-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "main"
+      "phases";
+  }
+
+  .live-monitor-phases {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
   .topbar {
     padding: 12px 16px !important;
     flex-direction: column;

@@ -30,6 +30,7 @@ const TEXT_SECONDARY = "var(--text-secondary)";
 const TEXT_MUTED = "var(--text-muted)";
 const TEXT_FAINT = "var(--text-faint)";
 const TEXT_DISABLED = "var(--text-disabled)";
+const TEXT_WARNING = "var(--text-warning)";
 const MONO = "'JetBrains Mono', monospace";
 const SANS = "'Outfit', sans-serif";
 
@@ -93,14 +94,14 @@ function metrics(data: { actual: number; lstm: number; xgboost: number }[]) {
 }
 
 // ─── Shared UI ────────────────────────────────────────────────────────────────
-const Tip = ({ active, payload, label }: any) => {
+const Tip = ({ active, payload, label, unit }: any) => {
   if (!active || !payload?.length) return null;
   return (
     <div style={{ background: INSET_BG, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "8px 12px", fontFamily: MONO, fontSize: 11 }}>
       <p style={{ color: TEXT_SECONDARY, marginBottom: 4 }}>{label}</p>
       {payload.map((p: any, i: number) => (
         <p key={i} style={{ color: p.color, margin: "2px 0" }}>
-          {p.name}: <strong>{Number(p.value).toLocaleString()}</strong>
+          {p.name}: <strong>{Number(p.value).toLocaleString()}{unit ? ` ${unit}` : ""}</strong>
         </p>
       ))}
     </div>
@@ -135,9 +136,9 @@ function StatRow({ label, value, unit, color = TEXT_PRIMARY }: { label: string; 
   );
 }
 
-function Card({ children, style = {} }: { children: React.ReactNode; style?: React.CSSProperties }) {
+function Card({ children, className, style = {} }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
   return (
-    <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 11, padding: 16, ...style }}>
+    <div className={className} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 11, padding: 16, ...style }}>
       {children}
     </div>
   );
@@ -192,14 +193,16 @@ function LiveMonitorTab() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
 
-      <div style={{ border: `1px solid ${AMBER}44`, background: `${AMBER}0d`, borderRadius: 8, padding: "10px 12px" }}>
-        <p style={{ color: `${AMBER}99`, fontFamily: MONO, fontSize: 9, lineHeight: 1.5, margin: 0 }}>
+      <div className="live-monitor-notice" style={{ border: `1px solid ${AMBER}44`, background: `${AMBER}0d`, borderRadius: 8, padding: "8px 12px" }}>
+        <p style={{ color: TEXT_WARNING, fontFamily: MONO, fontSize: 9, lineHeight: 1.5, margin: 0 }}>
           Planned integration preview — the Shelly Pro 3EM is not yet connected. Values shown in this tab are simulated interface data and are not actual building measurements.
         </p>
       </div>
 
-      {/* Hero readout */}
-      <Card style={{ textAlign: "center", padding: "20px 14px", position: "relative", overflow: "hidden" }}>
+      <div className="live-monitor-grid">
+        <div className="live-monitor-main">
+          {/* Hero readout */}
+          <Card className="live-monitor-hero" style={{ textAlign: "center", padding: "8px 14px", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse at 50% 0%, ${G}12 0%, transparent 70%)`, pointerEvents: "none" }} />
         <p style={{ color: TEXT_FAINT, fontSize: 11, fontFamily: MONO, textTransform: "uppercase", letterSpacing: 2, marginBottom: 8 }}>Total Active Power</p>
         <p style={{ color: G, fontSize: 42, fontWeight: 700, fontFamily: MONO, lineHeight: 1, marginBottom: 4 }}>
@@ -219,64 +222,30 @@ function LiveMonitorTab() {
             </div>
           ))}
         </div>
-      </Card>
-
-      {/* Live chart */}
-      <Card>
-        <SectionTitle>Live Power (last 20s)</SectionTitle>
-        <ResponsiveContainer width="100%" height={92}>
-          <AreaChart data={liveHistory} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
-            <defs>
-              <linearGradient id="lgLive" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={G} stopOpacity={0.3} />
-                <stop offset="95%" stopColor={G} stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <XAxis dataKey="t" tick={{ fill: TEXT_FAINT, fontSize: 9, fontFamily: MONO }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fill: TEXT_FAINT, fontSize: 9, fontFamily: MONO }} axisLine={false} tickLine={false} width={40} domain={["auto","auto"]} />
-            <Tooltip content={<Tip />} />
-            <Area type="monotone" dataKey="total" name="W" stroke={G} strokeWidth={2} fill="url(#lgLive)" dot={false} />
-          </AreaChart>
-        </ResponsiveContainer>
-      </Card>
-
-      {/* Phase cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
-        {phases.map((p) => (
-          <Card key={p.id} style={{ padding: 13 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ width: 8, height: 8, borderRadius: 4, background: p.color }} />
-                <span style={{ color: TEXT_SECONDARY, fontFamily: SANS, fontSize: 13, fontWeight: 600 }}>Phase {p.id}</span>
-              </div>
-              <span style={{ color: p.color, fontFamily: MONO, fontSize: 20, fontWeight: 700 }}>
-                {(p.watts / 1000).toFixed(2)} <span style={{ fontSize: 11, color: TEXT_FAINT }}>kW</span>
-              </span>
-            </div>
-            <StatRow label="Current" value={p.current.toFixed(1)} unit="A" color={p.color} />
-            <StatRow label="Voltage" value={p.voltage.toFixed(1)} unit="V" />
-            <StatRow label="Power Factor" value={p.pf.toFixed(2)} />
-            <StatRow label="Frequency" value={p.freq.toFixed(2)} unit="Hz" />
-            <StatRow label="Apparent Power" value={((p.watts / p.pf) / 1000).toFixed(2)} unit="kVA" />
-
-            {/* Load bar */}
-            <div style={{ marginTop: 14 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-                <span style={{ color: TEXT_FAINT, fontSize: 10, fontFamily: SANS }}>Load (max 400A)</span>
-                <span style={{ color: TEXT_FAINT, fontSize: 10, fontFamily: MONO }}>{((p.current / 400) * 100).toFixed(1)}%</span>
-              </div>
-              <div style={{ background: TRACK_BG, borderRadius: 4, height: 4 }}>
-                <div style={{ height: 4, borderRadius: 4, background: p.color, width: `${(p.current / 400) * 100}%`, transition: "width .4s" }} />
-              </div>
-            </div>
           </Card>
-        ))}
-      </div>
 
-      {/* Device info */}
+          {/* Live chart */}
           <Card>
+            <SectionTitle>Live Power (last 20s)</SectionTitle>
+            <ResponsiveContainer width="100%" height={180}>
+              <AreaChart data={liveHistory} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+                <defs>
+                  <linearGradient id="lgLive" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={G} stopOpacity={0.3} />
+                    <stop offset="95%" stopColor={G} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="t" tick={{ fill: TEXT_FAINT, fontSize: 9, fontFamily: MONO }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: TEXT_FAINT, fontSize: 9, fontFamily: MONO }} axisLine={false} tickLine={false} width={40} domain={["auto","auto"]} />
+                <Tooltip content={<Tip />} />
+                <Area type="monotone" dataKey="total" name="W" stroke={G} strokeWidth={2} fill="url(#lgLive)" dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </Card>
+
+          <Card className="live-monitor-device" style={{ padding: "12px 14px" }}>
             <SectionTitle>Device — Shelly Pro 3EM</SectionTitle>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0 }}>
+            <div className="live-monitor-device-grid">
               <StatRow label="Model" value="Shelly Pro 3EM" color={TEXT_SECONDARY} />
               <StatRow label="Max Current" value="120" unit="A" color={G} />
               <StatRow label="Phases" value="3" color={TEXT_SECONDARY} />
@@ -285,6 +254,54 @@ function LiveMonitorTab() {
               <StatRow label="Uptime" value="Simulated preview" color={TEXT_SECONDARY} />
             </div>
           </Card>
+        </div>
+
+        {/* Phase cards */}
+        <div className="live-monitor-phases">
+          {phases.map((p) => {
+            const readings = [
+              { label: "Current", value: p.current.toFixed(1), unit: "A", color: p.color },
+              { label: "Voltage", value: p.voltage.toFixed(1), unit: "V", color: TEXT_PRIMARY },
+              { label: "Power Factor", value: p.pf.toFixed(2), unit: "", color: TEXT_PRIMARY },
+              { label: "Frequency", value: p.freq.toFixed(2), unit: "Hz", color: TEXT_PRIMARY },
+              { label: "Apparent Power", value: ((p.watts / p.pf) / 1000).toFixed(2), unit: "kVA", color: TEXT_PRIMARY },
+            ];
+
+            return (
+              <Card key={p.id} style={{ padding: "12px 14px" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: 4, background: p.color }} />
+                    <span style={{ color: TEXT_SECONDARY, fontFamily: SANS, fontSize: 13, fontWeight: 600 }}>Phase {p.id}</span>
+                  </div>
+                  <span style={{ color: p.color, fontFamily: MONO, fontSize: 20, fontWeight: 700 }}>
+                    {(p.watts / 1000).toFixed(2)} <span style={{ fontSize: 11, color: TEXT_FAINT }}>kW</span>
+                  </span>
+                </div>
+                <div className="phase-reading-grid">
+                  {readings.map((reading) => (
+                    <div className="phase-reading-row" key={reading.label}>
+                      <div className="phase-reading-label" style={{ color: TEXT_MUTED, fontFamily: SANS }}>{reading.label}</div>
+                      <div className="phase-reading-value" style={{ color: reading.color, fontFamily: MONO, fontWeight: 600 }}>
+                        {reading.value}{reading.unit && <span style={{ color: TEXT_FAINT, fontSize: 10, marginLeft: 3 }}>{reading.unit}</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ marginTop: 7 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+                    <span style={{ color: TEXT_FAINT, fontSize: 10, fontFamily: SANS }}>Load (max 400A)</span>
+                    <span style={{ color: TEXT_FAINT, fontSize: 10, fontFamily: MONO }}>{((p.current / 400) * 100).toFixed(1)}%</span>
+                  </div>
+                  <div style={{ background: TRACK_BG, borderRadius: 4, height: 4 }}>
+                    <div style={{ height: 4, borderRadius: 4, background: p.color, width: `${(p.current / 400) * 100}%`, transition: "width .4s" }} />
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
@@ -366,24 +383,25 @@ function ConsumptionTab() {
   const interval = period === "Hourly" ? 0 : period === "Daily" ? 5 : period === "Weekly" ? 8 : 0;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+    <div className="consumption-layout">
 
-      <div style={{ border: `1px solid ${AMBER}44`, background: `${AMBER}0d`, borderRadius: 8, padding: "10px 12px" }}>
-        <p style={{ color: `${AMBER}99`, fontFamily: MONO, fontSize: 9, lineHeight: 1.5, margin: 0 }}>
+      <div className="consumption-notice" style={{ border: `1px solid ${AMBER}44`, background: `${AMBER}0d`, borderRadius: 8, padding: "10px 12px" }}>
+        <p style={{ color: TEXT_WARNING, fontFamily: MONO, fontSize: 9, lineHeight: 1.5, margin: 0 }}>
           Future building-monitoring view — hourly, daily, weekly, and monthly summaries will be derived from Shelly Pro 3EM readings after device integration. Current values are simulated.
         </p>
       </div>
 
-      <Card style={{ padding: 20 }}>
+      <div className="consumption-workspace">
+      <Card className="consumption-settings" style={{ padding: 16 }}>
         <SectionTitle>Electricity Rate Settings</SectionTitle>
         <p style={{ color: TEXT_SECONDARY, fontSize: 13, fontWeight: 600, margin: "0 0 4px" }}>
           Monthly CASURECO III rate history
         </p>
-        <p style={{ color: TEXT_MUTED, fontSize: 11, lineHeight: 1.5, margin: "0 0 16px" }}>
+        <p className="consumption-settings-description" style={{ color: TEXT_MUTED, fontSize: 11, lineHeight: 1.5, margin: "0 0 16px" }}>
           Enter the official advisory date and effective billing period. CASURECO III often publishes advisories near the 20th–28th, but the dashboard does not assume a fixed change date.
         </p>
 
-        <form onSubmit={saveMonthlyRate} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <form className="consumption-rate-form" onSubmit={saveMonthlyRate} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div className="consumption-rate-fields">
             {[
               { label: "Rate advisory month", type: "month", value: rateMonth, change: setRateMonth },
@@ -446,10 +464,32 @@ function ConsumptionTab() {
           {rateError && <p role="alert" style={{ color: AMBER, fontFamily: MONO, fontSize: 11, margin: 0 }}>{rateError}</p>}
 
         </form>
+        <div className="consumption-rate-history">
+          <div className="consumption-rate-history-heading">
+            <span>Saved rate history</span>
+            <span>{monthlyRates.length} {monthlyRates.length === 1 ? "record" : "records"}</span>
+          </div>
+          {monthlyRates.length === 0 ? (
+            <p className="consumption-rate-empty">No monthly rates saved yet.</p>
+          ) : (
+            <div className="consumption-rate-list">
+              {monthlyRates.map((entry) => (
+                <div className="consumption-rate-entry" key={entry.id}>
+                  <div>
+                    <strong>{entry.month}</strong>
+                    <span>{entry.effectiveFrom} to {entry.effectiveThrough}</span>
+                  </div>
+                  <strong>₱{entry.rate.toFixed(2)}/kWh</strong>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </Card>
 
+      <div className="consumption-dashboard">
       {/* Period selector */}
-      <div style={{ display: "flex", gap: 7 }}>
+      <div className="consumption-period-selector" style={{ display: "flex", gap: 7 }}>
         {(["Hourly","Daily","Weekly","Monthly"] as Period[]).map((p) => (
           <Pill key={p} active={period === p} onClick={() => setPeriod(p)}>{p}</Pill>
         ))}
@@ -464,17 +504,18 @@ function ConsumptionTab() {
           { label: "Peak", value: peak.toFixed(1), color: CYAN },
           { label: "Peak at", value: peakLabel, color: TEXT_PRIMARY },
         ].map((k) => (
-          <Card key={k.label} style={{ padding: "16px 18px" }}>
+          <Card key={k.label} style={{ padding: "12px 14px" }}>
             <p style={{ color: TEXT_FAINT, fontSize: 10, fontFamily: MONO, textTransform: "uppercase", letterSpacing: 1.5, whiteSpace: "nowrap", margin: "0 0 8px" }}>{k.label}</p>
             <p style={{ color: k.color, fontFamily: MONO, fontSize: 20, fontWeight: 700, whiteSpace: "nowrap", margin: 0 }}>{k.value}</p>
           </Card>
         ))}
       </div>
 
+      <div className="consumption-charts">
       {/* Energy chart */}
-      <Card>
+      <Card className="consumption-chart">
         <SectionTitle>Energy Consumption — {period}</SectionTitle>
-        <ResponsiveContainer width="100%" height={205}>
+        <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
             <defs>
               <linearGradient id="lgBar" x1="0" y1="0" x2="0" y2="1">
@@ -492,10 +533,10 @@ function ConsumptionTab() {
       </Card>
 
       {/* Cost chart */}
-      <Card>
+      <Card className="consumption-chart">
         <SectionTitle>Estimated Energy Cost (₱) — {period}</SectionTitle>
         {selectedRate ? (
-          <ResponsiveContainer width="100%" height={205}>
+          <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
               <defs>
                 <linearGradient id="lgCost" x1="0" y1="0" x2="0" y2="1">
@@ -511,13 +552,16 @@ function ConsumptionTab() {
             </AreaChart>
           </ResponsiveContainer>
         ) : (
-          <div style={{ height: 165, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, textAlign: "center" }}>
+          <div className="consumption-cost-empty" style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: 16, textAlign: "center" }}>
             <p style={{ color: TEXT_FAINT, fontFamily: MONO, fontSize: 11, lineHeight: 1.6, maxWidth: 420, margin: 0 }}>
               Add and select a monthly CASURECO III rate to calculate estimated energy cost.
             </p>
           </div>
         )}
       </Card>
+      </div>
+      </div>
+      </div>
     </div>
   );
 }
@@ -675,7 +719,7 @@ const modelResults = modelResultsJson as ModelResults;
 function WithheldResultsNotice({ message }: { message: string }) {
   return (
     <div style={{ border: `1px solid ${AMBER}44`, background: `${AMBER}0d`, borderRadius: 10, padding: "14px 16px" }}>
-      <p style={{ color: `${AMBER}99`, fontFamily: MONO, fontSize: 10, lineHeight: 1.5, margin: 0 }}>
+      <p style={{ color: TEXT_WARNING, fontFamily: MONO, fontSize: 10, lineHeight: 1.5, margin: 0 }}>
         {message}
       </p>
     </div>
@@ -767,7 +811,7 @@ function ModelComparisonTab() {
       </Card>
 
       <div style={{ border: `1px solid ${AMBER}44`, background: `${AMBER}0d`, borderRadius: 10, padding: "14px 16px" }}>
-        <p style={{ color: `${AMBER}99`, fontFamily: MONO, fontSize: 10, lineHeight: 1.5, margin: 0 }}>
+        <p style={{ color: TEXT_WARNING, fontFamily: MONO, fontSize: 10, lineHeight: 1.5, margin: 0 }}>
           Lower error values indicate stronger predictive performance. The preferred learning model is selected automatically from the lowest MAE, RMSE, and MAPE among LSTM and XGBoost, while persistence remains a baseline comparison only.
         </p>
       </div>
@@ -806,51 +850,87 @@ function VerifiedForecastTab() {
   }));
 
   return (
-    <div className="results-view" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div style={{ border: `1px solid ${AMBER}66`, background: "rgba(255, 160, 0, 0.08)", borderRadius: 12, padding: "12px 14px", color: "#f5c46b", fontFamily: MONO, fontSize: 12, lineHeight: 1.5 }}>
-        One-month-ahead forecasting results · Evaluation period: January–February 2025 · Validation protocol: rolling-origin · Unit: kWh
-      </div>
+    <div className="results-view forecast-workspace">
+      <section className="forecast-main-panel">
+        <div className="forecast-intro">
+          <p className="forecast-eyebrow">Forecast Workspace</p>
+          <h1>Historical Test Output</h1>
+          <p>
+            Rolling one-month-ahead results for January and February 2025, compared with observed consumption.
+          </p>
+        </div>
 
-      <Card>
-        <SectionTitle>Actual vs Forecasted Consumption — January–February 2025</SectionTitle>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
-            <XAxis dataKey="month" tick={{ fill: TEXT_FAINT, fontSize: 10, fontFamily: MONO }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fill: TEXT_FAINT, fontSize: 10, fontFamily: MONO }} axisLine={false} tickLine={false} width={48} />
-            <Tooltip content={<Tip />} />
-            <Line type="monotone" dataKey="actual" name="Actual" stroke={TEXT_PRIMARY} strokeWidth={2} dot={{ r: 4, fill: TEXT_PRIMARY }} />
-            <Line type="monotone" dataKey="lstm" name="LSTM" stroke={CYAN} strokeWidth={2} dot={{ r: 4, fill: CYAN }} />
-            <Line type="monotone" dataKey="xgboost" name="XGBoost" stroke={VIOLET} strokeWidth={2} dot={{ r: 4, fill: VIOLET }} />
-            <Line type="monotone" dataKey="persistence" name="Persistence" stroke={AMBER} strokeWidth={2} dot={{ r: 4, fill: AMBER }} />
-          </LineChart>
-        </ResponsiveContainer>
-      </Card>
+        <div className="forecast-chart-panel">
+          <div className="forecast-panel-heading">
+            <SectionTitle>Actual vs Forecasted Consumption · January–February 2025</SectionTitle>
+            <span>kWh</span>
+          </div>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData} margin={{ top: 6, right: 12, bottom: 0, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
+              <XAxis dataKey="month" tick={{ fill: TEXT_FAINT, fontSize: 10, fontFamily: MONO }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: TEXT_FAINT, fontSize: 10, fontFamily: MONO }} axisLine={false} tickLine={false} width={52} />
+              <Tooltip content={<Tip unit="kWh" />} />
+              <Line type="monotone" dataKey="actual" name="Actual" stroke={TEXT_PRIMARY} strokeWidth={2} dot={{ r: 4, fill: TEXT_PRIMARY }} />
+              <Line type="monotone" dataKey="lstm" name="LSTM" stroke={CYAN} strokeWidth={2} dot={{ r: 4, fill: CYAN }} />
+              <Line type="monotone" dataKey="xgboost" name="XGBoost" stroke={VIOLET} strokeWidth={2} dot={{ r: 4, fill: VIOLET }} />
+              <Line type="monotone" dataKey="persistence" name="Persistence" stroke={AMBER} strokeWidth={2} dot={{ r: 4, fill: AMBER }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
 
-      <Card style={{ padding: 12 }}>
-        <SectionTitle>Forecast Output Table</SectionTitle>
-        <div style={{ display: "grid", gridTemplateColumns: "1.2fr repeat(4, minmax(0, 1fr))", gap: 8, fontFamily: MONO, fontSize: 11 }}>
-          <div style={{ color: TEXT_FAINT, padding: "8px 6px", textTransform: "uppercase", letterSpacing: 1.2 }}>Month</div>
-          <div style={{ color: TEXT_FAINT, padding: "8px 6px", textTransform: "uppercase", letterSpacing: 1.2 }}>Actual</div>
-          <div style={{ color: CYAN, padding: "8px 6px", textTransform: "uppercase", letterSpacing: 1.2 }}>LSTM</div>
-          <div style={{ color: VIOLET, padding: "8px 6px", textTransform: "uppercase", letterSpacing: 1.2 }}>XGBoost</div>
-          <div style={{ color: AMBER, padding: "8px 6px", textTransform: "uppercase", letterSpacing: 1.2 }}>Persistence</div>
+        <div className="forecast-output-table">
+          <div className="forecast-panel-heading">
+            <SectionTitle>Forecast Output Table</SectionTitle>
+          </div>
+          <div className="forecast-output-grid">
+            <div className="forecast-table-heading">Month</div>
+            <div className="forecast-table-heading">Actual</div>
+            <div className="forecast-table-heading forecast-lstm">LSTM</div>
+            <div className="forecast-table-heading forecast-xgboost">XGBoost</div>
+            <div className="forecast-table-heading forecast-persistence">Persistence</div>
+            {modelResults.testResults.map((row, index) => (
+              <Fragment key={row.month}>
+                <div className="forecast-table-cell">{row.label}</div>
+                <div className="forecast-table-cell">{row.actualKwh.toLocaleString()}</div>
+                <div className="forecast-table-cell forecast-lstm">{row.lstmKwh.toLocaleString()}</div>
+                <div className="forecast-table-cell forecast-xgboost">{row.xgboostKwh.toLocaleString()}</div>
+                <div className="forecast-table-cell forecast-persistence">{row.persistenceKwh.toLocaleString()}</div>
+              </Fragment>
+            ))}
+          </div>
+        </div>
 
-          {modelResults.testResults.map((row, index) => (
-            <Fragment key={row.month}>
-              <div style={{ color: TEXT_PRIMARY, padding: "8px 6px", borderTop: index === 0 ? "none" : `1px solid ${BORDER}` }}>{row.label}</div>
-              <div style={{ color: TEXT_PRIMARY, padding: "8px 6px", borderTop: index === 0 ? "none" : `1px solid ${BORDER}` }}>{row.actualKwh.toLocaleString()} kWh</div>
-              <div style={{ color: CYAN, padding: "8px 6px", borderTop: index === 0 ? "none" : `1px solid ${BORDER}` }}>{row.lstmKwh.toLocaleString()} kWh</div>
-              <div style={{ color: VIOLET, padding: "8px 6px", borderTop: index === 0 ? "none" : `1px solid ${BORDER}` }}>{row.xgboostKwh.toLocaleString()} kWh</div>
-              <div style={{ color: AMBER, padding: "8px 6px", borderTop: index === 0 ? "none" : `1px solid ${BORDER}` }}>{row.persistenceKwh.toLocaleString()} kWh</div>
-            </Fragment>
+        <div className="forecast-summary-grid">
+          <div><span>Development</span><strong>{modelResults.dataset.observedDevelopmentRecords} observed · {modelResults.dataset.interpolatedTrainingMonths} interpolated</strong></div>
+          <div><span>Testing</span><strong>{modelResults.dataset.testRecords} records</strong></div>
+          <div><span>Granularity</span><strong>Monthly</strong></div>
+        </div>
+      </section>
+
+      <aside className="forecast-exports-panel">
+        <SectionTitle>Required Model Exports</SectionTitle>
+        <div className="forecast-export-list">
+          {[
+            { number: "01", title: "LSTM predictions", file: "train_lstm.py", metric: `MAE ${modelResults.metrics.lstm.mae.toLocaleString()} kWh`, color: CYAN },
+            { number: "02", title: "XGBoost predictions", file: "train_xgboost.py", metric: `MAE ${modelResults.metrics.xgboost.mae.toLocaleString()} kWh`, color: VIOLET },
+            { number: "03", title: "Comparison metrics", file: "compare.py", metric: `Best MAPE ${modelResults.metrics.xgboost.mape.toFixed(2)}% · XGBoost`, color: G },
+          ].map((item) => (
+            <div className="forecast-export-item" key={item.number}>
+              <span className="forecast-export-number" style={{ color: item.color, borderColor: `${item.color}44`, background: `${item.color}12` }}>{item.number}</span>
+              <div className="forecast-export-copy">
+                <strong>{item.title}</strong>
+                <span>{item.file}</span>
+                <small>{item.metric}</small>
+              </div>
+              <span className="forecast-export-status">Ready</span>
+            </div>
           ))}
         </div>
-      </Card>
-
-      <div style={{ border: `1px solid ${AMBER}66`, background: "rgba(255, 160, 0, 0.05)", borderRadius: 12, padding: "12px 14px", color: TEXT_PRIMARY, fontFamily: MONO, fontSize: 11, lineHeight: 1.5 }}>
-        Development series: 15 observed months and 9 interpolated months · Test set: 2 observed months · Verified model outputs generated: {new Date(modelResults.generatedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
-      </div>
+        <div className="forecast-verified-note">
+          Verified exports loaded from <strong>model-results.json</strong>. Generated {new Date(modelResults.generatedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })} using rolling-origin validation.
+        </div>
+      </aside>
     </div>
   );
 }
@@ -938,13 +1018,13 @@ export default function App() {
       </nav>
 
       {/* Content */}
-      <main className="content-shell" style={{ maxWidth: tab === "Consumption" ? 1220 : 960, margin: "0 auto", padding: "20px 16px" }}>
+      <main className={`content-shell${tab === "Live Monitor" ? " live-monitor-content" : ""}${tab === "Consumption" ? " consumption-content" : ""}${tab === "Forecast" ? " forecast-content" : ""}`} style={{ maxWidth: tab === "Consumption" ? 1220 : 960, margin: "0 auto", padding: "20px 16px" }}>
         {tab === "Live Monitor"     && <LiveMonitorTab />}
         {tab === "Consumption"      && <ConsumptionTab />}
         {tab === "Forecast"         && <VerifiedForecastTab />}
         {tab === "Model Comparison" && <VerifiedModelComparisonTab />}
 
-        <footer style={{ marginTop: 48, paddingTop: 24, borderTop: `1px solid ${BORDER}`, textAlign: "center" }}>
+        <footer className={tab === "Consumption" ? "consumption-footer" : tab === "Forecast" ? "forecast-footer" : undefined} style={{ marginTop: 48, paddingTop: 24, borderTop: `1px solid ${BORDER}`, textAlign: "center" }}>
           <p style={{ color: TEXT_DISABLED, fontFamily: MONO, fontSize: 11, lineHeight: 1.7 }}>
             CSPC · College of Computer Studies · BS Computer Science · September 2026<br />
             Romance · Sarcauga · Namia · Villamer · Adviser: Tiffanylyn Pandes, MSc.
